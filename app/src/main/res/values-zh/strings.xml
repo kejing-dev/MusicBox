@@ -44,7 +44,7 @@
     <string name="new_full">满了，先删一首</string>
     <string name="btn_delete">删除</string>
     <string name="mine_line">%1$d 颗钉 · %2$s</string>
-    <string name="mine_empty">还没有自己的曲子。点「新曲子」，或者改一首老曲子，会自动另存在这里。</string>
+    <string name="mine_empty">还没有自己的曲子。改一首老曲子，或点「新曲子」从空滚筒开始。</string>
     <string name="mine_room">还能再存 %1$d 首。改一首老曲子，也会自动另存到这里。</string>
     <string name="now_playing">在滚筒上</string>
 
@@ -83,4 +83,11 @@
     <string name="confirm_quit_line">你的曲子都存好了。</string>
     <string name="confirm_yes_quit">退出</string>
     <string name="btn_cancel">取消</string>
+    <string name="btn_edit_pins">钉谱…</string>
+    <string name="btn_edit_done">钉好了</string>
+    <string name="btn_change_this">改这首</string>
+    <string name="btn_clear_pins">清空…</string>
+    <string name="card_on_drum">滚筒上：%1$s</string>
+    <string name="card_pins">%1$d 颗钉 · %2$d 列</string>
+    <string name="edit_caption">点齿钉一颗 · %1$d 颗钉 · 第 %2$d 列，共 %3$d 列</string>
 </resources>

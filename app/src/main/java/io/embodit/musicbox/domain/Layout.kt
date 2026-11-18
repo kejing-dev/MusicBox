@@ -160,7 +160,47 @@ object Layout {
         "emulatorDefault" to V3(0f, 0.10f, 1.75f),
     )
 
-    fun eyesContent(k: Float = K): Map<String, V3> = EYES_PHYSICAL.mapValues { it.value * (1f / k) }
+    /**
+     * QA #1 known issue (D54): the system parks the volume ~1.75 m away at eye height, so the comb was seen edge-on. The
+     * content leans its top [TILT_DEG] toward the user (about X) and rises [TILT_LIFT] (k = 1 metres, in the volume frame)
+     * so the tilted bottom edge stays inside; the box still sits in the lower half, below the line of sight.
+     */
+    const val TILT_DEG = 12f
+    const val TILT_LIFT = 0.019f
+
+    /** Content point (k = 1, content frame) -> volume frame (k = 1): rotate about X by [TILT_DEG], then lift. */
+    fun toVolume(p: V3, deg: Float = TILT_DEG, lift: Float = TILT_LIFT): V3 {
+        val a = Math.toRadians(deg.toDouble()); val c = cos(a).toFloat(); val s = sin(a).toFloat()
+        return V3(p.x, p.y * c - p.z * s + lift, p.y * s + p.z * c)
+    }
+
+    /** Volume frame (k = 1) -> content frame: the inverse of [toVolume]. */
+    fun toContent(p: V3, deg: Float = TILT_DEG, lift: Float = TILT_LIFT): V3 {
+        val a = Math.toRadians(deg.toDouble()); val c = cos(a).toFloat(); val s = sin(a).toFloat()
+        val y = p.y - lift; val z = p.z
+        return V3(p.x, y * c + z * s, -y * s + z * c)
+    }
+
+    /** Eyes in the content frame (k = 1): physical / k, then undo the tilt (the occlusion tests run in content metres). */
+    fun eyesContent(k: Float = K): Map<String, V3> = EYES_PHYSICAL.mapValues { toContent(it.value * (1f / k)) }
+
+    /** Eyes in the volume frame (k = 1), for the view-angle checks. */
+    fun eyesVolume(k: Float = K): Map<String, V3> = EYES_PHYSICAL.mapValues { it.value * (1f / k) }
+
+    /**
+     * The real extreme points of the content (box body, open lid both faces, key, dancer top, notes, card) — the corners
+     * of what is actually there, not one AABB (an AABB of the open lid + box puts a phantom corner low at the back).
+     */
+    fun contentPoints(): List<V3> {
+        val pts = ArrayList<V3>()
+        for (x in listOf(BX0, BX1)) for (y in listOf(BY0, BY1)) for (z in listOf(BZ0, BZ1)) pts += V3(x, y, z)
+        for (x in listOf(BX0, BX1)) for (along in listOf(0f, LID_L)) for (out in listOf(-LID_T, LID_T)) pts += lidPoint(x, along, out = out)
+        pts += Aabb("key", KEY_HIT_MIN, KEY_HIT_MAX).corners()
+        pts += V3(WELL.x, STAGE_UP_Y + DANCER_H, WELL.z)
+        pts += listOf(V3(tineX(0), 0.05f, 0.02f), V3(tineX(7), 0.05f, 0.02f))
+        pts += cardCorners()
+        return pts
+    }
 
     /** Angular size (degrees) of a target [sizeM] (content metres at k = 1) seen from [distM] physical metres at scale [k]. */
     fun angleDeg(sizeM: Float, distM: Float, k: Float = K): Float = Math.toDegrees(2 * kotlin.math.atan((sizeM * k / 2 / distM).toDouble())).toFloat()

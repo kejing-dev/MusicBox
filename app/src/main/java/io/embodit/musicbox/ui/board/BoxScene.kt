@@ -105,7 +105,14 @@ internal class BoxScene(private val ctl: BoxCtl, private val scope: CoroutineSco
     @Volatile var hover: String? = null
     @Volatile var hoverAt = 0L
 
-    init { root.addChild(content); content.transform().setScaleVector(Vector3(scale, scale, scale)) }
+    init { root.addChild(content); applyContentTransform() }
+
+    /** Scale + the lean toward the user (Layout.TILT_DEG about X, lifted Layout.TILT_LIFT so the bottom stays in the volume). */
+    private fun applyContentTransform() {
+        content.transform().setScaleVector(Vector3(scale, scale, scale))
+        content.transform().setQuaternion(qx(Layout.TILT_DEG.toDouble()))
+        content.transform().setPosition(Vector3(0f, Layout.TILT_LIFT * scale, 0f))
+    }
 
     val ready: Boolean get() = built
 
@@ -113,7 +120,7 @@ internal class BoxScene(private val ctl: BoxCtl, private val scope: CoroutineSco
     fun setScale(s: Float) {
         if (!s.isFinite() || s <= 0f || abs(s - scale) < 1e-4f) return
         scale = s
-        content.transform().setScaleVector(Vector3(s, s, s))
+        applyContentTransform()
         Log.i(TAG, "SCENE scale=$s")
     }
 

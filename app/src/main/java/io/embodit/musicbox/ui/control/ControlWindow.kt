@@ -6,6 +6,11 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,6 +97,7 @@ fun ControlWindow() {
         if (Ui.page != Page.SETTINGS) Ui.howTo = false
         if (Ui.confirm is Confirm.Quit && Ui.page != Page.SETTINGS) Ui.confirm = null
     }
+    LaunchedEffect(Ui.editPins) { Log.i(TAG, "EDIT view=${Ui.editPins}") }
 
     Box(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 20.dp)) {
         val c = Ui.confirm
@@ -111,7 +117,9 @@ fun ControlWindow() {
         Triple(Page.SONGS, R.drawable.ic_tab_songs, stringResource(R.string.tab_songs)),
         Triple(Page.SETTINGS, R.drawable.ic_tab_settings, stringResource(R.string.tab_settings)),
     )
-    NativeTabs(tabs)
+    // the pin-edit view is a focused mode (like a confirm): the TabBar steps aside so the screen stays <= 7 controls (B31)
+    val editing = Ui.editPins && Ui.page == Page.PLAY && Ui.confirm == null && ui.state != BoxState.LOADING
+    if (!editing) NativeTabs(tabs)
 }
 
 @Composable
@@ -157,46 +165,88 @@ private fun LoadingPage(settings: Settings, graph: Graph) {
 
 // ------------------------------------------------------------------ P1 Play
 
+/**
+ * B31: at most 7 tappable controls per screen (tabs count, mute / quit do not). Play view: 3 tabs + [上弦并播放 / 停] +
+ * speed slider + [钉谱…] = 6. Edit view ([钉谱…] unfolds it in place, a focused mode like P4: the TabBar steps aside):
+ * ◂ / ▸ / 撤销 / 清空… / [钉好了] = 5.
+ */
 @Composable
 private fun PlayPage(ui: BoxUi, settings: Settings, graph: Graph) {
     val zh = isZh()
     val song = ui.song
     val key = Lines.key(Lines.Ctx(ui.state, ui.notice, true, ui.nearHint, ui.coachPin))
-    val block = Lines.editBlockKey(ui.state)
     val playing = ui.state.playing || ui.state == BoxState.REWINDING || ui.state == BoxState.SCRUB
     PageColumn {
         Header(song?.name(zh) ?: "", song?.tag(zh)?.takeIf { it.isNotEmpty() }, "play", settings, graph)
-        // the status sentence: the same line as the lid card (D38); with the near hint, the state line follows
-        Column(Modifier.fillMaxWidth().height(104.dp).clip(RoundedCornerShape(24.dp)).background(MBColors.TagFace).padding(horizontal = 20.dp), verticalArrangement = Arrangement.Center) {
-            Txt(stringResource(lineRes(key)), "play/status", style = PicoTheme.typography.titleMedium, color = MBColors.Ink, maxLines = 2)
-            if (key == "nearHint") Txt(stringResource(lineRes(Lines.stateKey(ui.state))), "play/status2", style = PicoTheme.typography.bodyMedium, color = MBColors.InkSecondary, maxLines = 1)
-        }
-        if (playing || ui.state == BoxState.LID_PAUSED) {
-            PrimaryButton(stringResource(R.string.btn_stop), "play/stop", icon = R.drawable.ic_stop, onClick = { graph.box.act("btn stop") { it.stop() } }, modifier = Modifier.fillMaxWidth())
-        } else {
-            PrimaryButton(stringResource(R.string.btn_wind_play), "play/wind", icon = R.drawable.ic_play, enabled = ui.state != BoxState.SWAPPING,
-                onClick = { graph.box.act("btn wind&play") { it.windAndPlay() } }, modifier = Modifier.fillMaxWidth())
-        }
-        Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-            Txt(stringResource(R.string.spring_label), "play/spring", style = PicoTheme.typography.labelLarge, modifier = Modifier.width(96.dp))
-            SpringCells(ui.cells, ui.gaugeFlash, Modifier.weight(1f))
-        }
-        OptionRow(stringResource(R.string.speed_label), "play/speed", labelWidth = 96.dp) {
-            SpeedSlider(settings.speed, onChange = { v -> graph.settings.update { it.copy(speed = v) } }, modifier = Modifier.weight(1f))
-        }
-        Column {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                SecondaryButton(stringResource(R.string.btn_back), "play/back", onClick = { graph.box.act("btn back") { it.back() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
-                SecondaryButton(stringResource(R.string.btn_rest), "play/rest", onClick = { graph.box.act("btn rest") { it.rest() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
-                SecondaryButton(stringResource(R.string.btn_undo), "play/undo", onClick = { graph.box.act("btn undo") { it.undo() } }, enabled = ui.canUndo, modifier = Modifier.weight(1f))
-                SecondaryButton(stringResource(R.string.btn_clear), "play/clear", onClick = { Ui.confirm = Confirm.Clear; Log.i(TAG, "CONFIRM clear P4") },
-                    enabled = ui.canEdit && (song?.pins?.isNotEmpty() == true), modifier = Modifier.weight(1f))
+        StatusCard(key, ui)
+        if (Ui.editPins) EditKeys(ui, graph) else PlayKeys(ui, settings, graph, playing)
+    }
+}
+
+/** The status sentence: the same line as the lid card (D38). The near hint (first open) gets the amber lamp so it reads first. */
+@Composable
+private fun StatusCard(key: String, ui: BoxUi) {
+    val near = key == "nearHint"
+    Row(
+        Modifier.fillMaxWidth().height(104.dp).clip(RoundedCornerShape(24.dp)).background(if (near) MBColors.NearFace else MBColors.TagFace).padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (near) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(MBColors.Amber), contentAlignment = Alignment.Center) {
+                Icon(painter = painterResource(R.drawable.ic_near), contentDescription = null, modifier = Modifier.size(26.dp), tint = MBColors.Ink)
             }
-            Spacer(Modifier.height(6.dp))
-            val caption = if (block != null) stringResource(lineRes(block)) else stringResource(R.string.pins_line, song?.pins?.size ?: 0, ui.col + 1, song?.length ?: 16)
-            Txt(caption, "play/caption", style = PicoTheme.typography.bodySmall, color = PicoTheme.colorScheme.labelSecondary, align = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.width(16.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Txt(stringResource(lineRes(key)), "play/status", style = PicoTheme.typography.titleMedium, color = MBColors.Ink, maxLines = 2)
+            if (near) Txt(stringResource(lineRes(Lines.stateKey(ui.state))), "play/status2", style = PicoTheme.typography.bodyMedium, color = MBColors.InkSecondary, maxLines = 1)
         }
     }
+}
+
+@Composable
+private fun PlayKeys(ui: BoxUi, settings: Settings, graph: Graph, playing: Boolean) {
+    val song = ui.song
+    if (playing || ui.state == BoxState.LID_PAUSED) {
+        PrimaryButton(stringResource(R.string.btn_stop), "play/stop", icon = R.drawable.ic_stop, onClick = { graph.box.act("btn stop") { it.stop() } }, modifier = Modifier.fillMaxWidth())
+    } else {
+        PrimaryButton(stringResource(R.string.btn_wind_play), "play/wind", icon = R.drawable.ic_play, enabled = ui.state != BoxState.SWAPPING,
+            onClick = { graph.box.act("btn wind&play") { it.windAndPlay() } }, modifier = Modifier.fillMaxWidth())
+    }
+    Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
+        Txt(stringResource(R.string.spring_label), "play/spring", style = PicoTheme.typography.labelLarge, modifier = Modifier.width(96.dp))
+        SpringCells(ui.cells, ui.gaugeFlash, Modifier.weight(1f))
+    }
+    OptionRow(stringResource(R.string.speed_label), "play/speed", labelWidth = 96.dp) {
+        SpeedSlider(settings.speed, onChange = { v -> graph.settings.update { it.copy(speed = v) } }, modifier = Modifier.weight(1f))
+    }
+    Column {
+        SecondaryButton(stringResource(R.string.btn_edit_pins), "play/edit", icon = R.drawable.ic_edit,
+            onClick = { Ui.editPins = true; Log.i(TAG, "EDIT open") }, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(6.dp))
+        Txt(stringResource(R.string.pins_line, song?.pins?.size ?: 0, ui.col + 1, song?.length ?: 16), "play/caption",
+            style = PicoTheme.typography.bodySmall, color = PicoTheme.colorScheme.labelSecondary, align = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** The pin-edit keys (◂ back / rest ▸ / undo / clear…) + [钉好了]; grey with the reason when the lid is shut or it is playing (D43). */
+@Composable
+private fun EditKeys(ui: BoxUi, graph: Graph) {
+    val song = ui.song
+    val block = Lines.editBlockKey(ui.state)
+    val caption = if (block != null) stringResource(lineRes(block)) else stringResource(R.string.edit_caption, song?.pins?.size ?: 0, ui.col + 1, song?.length ?: 16)
+    Txt(caption, "edit/caption", style = PicoTheme.typography.bodyMedium, color = if (block != null) MBColors.Ink else MBColors.InkSecondary,
+        align = TextAlign.Center, maxLines = 2, modifier = Modifier.fillMaxWidth())
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        SecondaryButton(stringResource(R.string.btn_back), "edit/back", onClick = { graph.box.act("btn back") { it.back() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
+        SecondaryButton(stringResource(R.string.btn_rest), "edit/rest", onClick = { graph.box.act("btn rest") { it.rest() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        SecondaryButton(stringResource(R.string.btn_undo), "edit/undo", icon = R.drawable.ic_undo, onClick = { graph.box.act("btn undo") { it.undo() } }, enabled = ui.canUndo, modifier = Modifier.weight(1f))
+        SecondaryButton(stringResource(R.string.btn_clear_pins), "edit/clear", icon = R.drawable.ic_clear, onClick = { Ui.confirm = Confirm.Clear; Log.i(TAG, "CONFIRM clear P4") },
+            enabled = ui.canEdit && (song?.pins?.isNotEmpty() == true), modifier = Modifier.weight(1f))
+    }
+    PrimaryButton(stringResource(R.string.btn_edit_done), "edit/done", icon = R.drawable.ic_done, onClick = { Ui.editPins = false; Log.i(TAG, "EDIT done") }, modifier = Modifier.fillMaxWidth())
 }
 
 // ------------------------------------------------------------------ P2 Tunes
@@ -221,18 +271,79 @@ private fun SongsPage(ui: BoxUi, settings: Settings, graph: Graph) {
                 ui.presets.forEach { s -> SongRow(s, zh, s.id == ui.song?.id, sub = "${s.tag(zh)} · ${s.lic(zh)}", graph = graph, onDelete = null) }
             }
         } else {
-            // my tunes from the top, then one card with what this list is for (fills the rest: no blank band, D44)
+            // my tunes from the top, then the tune on the drum: its roll and [改这首 / 钉谱…] (q1-1: useful, no blank band, D44)
             val fmt = remember { SimpleDateFormat("MM-dd HH:mm", Locale.US) }
             ui.mine.forEach { s ->
                 SongRow(s, zh, s.id == ui.song?.id, sub = stringResource(R.string.mine_line, s.pins.size, fmt.format(Date(s.updatedAt))), graph = graph,
                     onDelete = { Ui.confirm = Confirm.Delete(s.id); Log.i(TAG, "CONFIRM delete ${s.id} P4") })
             }
-            if (ui.mine.size < Drum.MY_CAP) {
-                Box(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(24.dp)).background(MBColors.TagFace).padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
-                    Txt(if (ui.mine.isEmpty()) stringResource(R.string.mine_empty) else stringResource(R.string.mine_room, Drum.MY_CAP - ui.mine.size),
-                        "songs/empty", style = PicoTheme.typography.titleMedium, color = MBColors.InkSecondary, maxLines = 3, align = TextAlign.Center)
+            if (ui.mine.size < Drum.MY_CAP) OnDrumCard(ui, zh, graph, Modifier.fillMaxWidth().weight(1f))
+        }
+    }
+}
+
+/**
+ * The tune on the drum, on the Tunes page: name + pins, a small roll (8 tine rows x its columns, pins in the tine colours,
+ * the pluck column marked) and [改这首] (a classic: the first pin saves a copy here) / [钉谱…] (opens the edit keys on Play).
+ * With no tunes of your own a line on top says how this list fills. Short space (4–5 tunes) -> one row: name + the key.
+ */
+@Composable
+private fun OnDrumCard(ui: BoxUi, zh: Boolean, graph: Graph, modifier: Modifier) {
+    val song = ui.song ?: return
+    val editLabel = stringResource(if (song.preset) R.string.btn_change_this else R.string.btn_edit_pins)
+    val onEdit = {
+        Log.i(TAG, "EDIT from tunes ${song.id}")
+        if (ui.state == BoxState.CLOSED && ui.cells == 0) graph.box.act("edit opens lid") { it.openLid() }
+        Ui.editPins = true; Ui.page = Page.PLAY
+    }
+    BoxWithConstraints(modifier.clip(RoundedCornerShape(24.dp)).background(MBColors.TagFace).padding(horizontal = 20.dp, vertical = 12.dp)) {
+        val roomy = maxHeight >= 200.dp
+        val intro = maxHeight >= 300.dp
+        if (!roomy) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Txt(stringResource(R.string.card_on_drum, song.name(zh)), "drum/name", style = PicoTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), color = MBColors.Ink)
+                    Txt(stringResource(R.string.card_pins, song.pins.size, song.length),
+                        "drum/pins", style = PicoTheme.typography.bodySmall, color = MBColors.InkSecondary)
                 }
+                Spacer(Modifier.width(12.dp))
+                PrimaryButton(editLabel, "drum/edit", icon = R.drawable.ic_edit, onClick = onEdit)
             }
+        } else {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (intro && ui.mine.isEmpty()) Txt(stringResource(R.string.mine_empty), "songs/empty", style = PicoTheme.typography.bodyMedium, color = MBColors.Ink, maxLines = 2)
+                else if (intro) Txt(stringResource(R.string.mine_room, Drum.MY_CAP - ui.mine.size), "songs/room", style = PicoTheme.typography.bodyMedium, color = MBColors.Ink, maxLines = 2)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Txt(stringResource(R.string.card_on_drum, song.name(zh)), "drum/name", style = PicoTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), color = MBColors.Ink, modifier = Modifier.weight(1f))
+                    Txt(stringResource(R.string.card_pins, song.pins.size, song.length), "drum/pins", style = PicoTheme.typography.bodySmall, color = MBColors.InkSecondary)
+                }
+                MiniRoll(song, ui.col, Modifier.fillMaxWidth().weight(1f))
+                PrimaryButton(editLabel, "drum/edit", icon = R.drawable.ic_edit, onClick = onEdit, modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+/** A read-only roll: 8 rows (tine 1 at the bottom, like the comb labels low -> high), one cell per column of the tune. */
+@Composable
+private fun MiniRoll(song: Song, col: Int, modifier: Modifier) {
+    val cols = song.length.coerceAtLeast(16)
+    val pins = song.pins
+    Canvas(modifier.clip(RoundedCornerShape(12.dp)).background(MBColors.RollFace)) {
+        val cw = size.width / cols; val rh = size.height / Drum.TINES
+        // beat lines every 4 columns, tine lines
+        for (c in 0..cols) {
+            val strong = c % 4 == 0
+            drawLine(if (strong) MBColors.RollLineStrong else MBColors.RollLine, Offset(c * cw, 0f), Offset(c * cw, size.height), strokeWidth = if (strong) 2f else 1f)
+        }
+        for (r in 0..Drum.TINES) drawLine(MBColors.RollLine, Offset(0f, r * rh), Offset(size.width, r * rh), strokeWidth = 1f)
+        if (col in 0 until cols) drawRect(MBColors.Amber.copy(alpha = 0.35f), topLeft = Offset(col * cw, 0f), size = Size(cw, size.height))
+        val rad = minOf(cw, rh) * 0.36f
+        for (p in pins) {
+            if (p.col >= cols) continue
+            val cx = (p.col + 0.5f) * cw; val cy = size.height - (p.tine + 0.5f) * rh
+            drawCircle(MBColors.TINES[p.tine], radius = rad, center = Offset(cx, cy))
+            drawCircle(MBColors.Ink.copy(alpha = 0.55f), radius = rad, center = Offset(cx, cy), style = Stroke(width = 1.5f))
         }
     }
 }

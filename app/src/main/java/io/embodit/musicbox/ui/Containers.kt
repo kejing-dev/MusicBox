@@ -27,4 +27,6 @@ object Ui {
     var confirm by mutableStateOf<Confirm?>(null)
     var songsTab by mutableStateOf(0)
     var howTo by mutableStateOf(false)
+    /** Play page: the pin-edit keys unfold in place of wind / spring / speed (B31: <= 7 tappable per screen). */
+    var editPins by mutableStateOf(false)
 }

@@ -82,8 +82,10 @@ class LayoutTest {
     }
 
     @Test fun contentCornersWithin39DegreesFromSeatedAndStandingEyes() {
-        // the 8 corners of box + open lid + key, seen from the design eyes looking at the volume centre
-        for ((n, e) in eyes.filterKeys { !it.startsWith("emulator") }) for (c in Layout.contentBounds().corners()) {
+        // every real corner of box + open lid + key (tilted into the volume frame), seen from the design eyes and the
+        // emulator default looking at the volume centre (D14 / QA ±39°, re-checked after the v0.1.1 lean)
+        val pts = Layout.contentPoints().map { Layout.toVolume(it) }
+        for ((n, e) in Layout.eyesVolume()) for (c in pts) {
             val d = c - e
             val toCentre = V3(0f, 0f, 0f) - e
             val yaw = Math.toDegrees(atan2(d.x.toDouble(), -d.z.toDouble()) - atan2(toCentre.x.toDouble(), -toCentre.z.toDouble()))
@@ -95,12 +97,36 @@ class LayoutTest {
 
     @Test fun everythingAnimatedStaysInTheVolume() {
         val hw = Layout.VOL_W / 2; val hh = Layout.VOL_H / 2; val hd = Layout.VOL_D / 2
-        val pts = Layout.contentBounds().corners() + Layout.cardCorners() + listOf(
-            V3(Layout.WELL.x, Layout.STAGE_UP_Y + Layout.DANCER_H, 0f), V3(Layout.tineX(7), 0.05f, 0.02f), V3(Layout.KEY_HIT_MAX.x, 0f, 0f),
-        )
-        for (p in pts) assertTrue("$p", abs(p.x) <= hw && abs(p.y) <= hh && abs(p.z) <= hd)
+        for (p in Layout.contentPoints().map { Layout.toVolume(it) }) assertTrue("$p", abs(p.x) <= hw && abs(p.y) <= hh && abs(p.z) <= hd)
         // closed lid: the lowered dancer is inside the box (head under the lid)
         assertTrue(Layout.STAGE_DOWN_Y + Layout.DANCER_H < Layout.BY1)
+    }
+
+    @Test fun tiltRoundTrips() {
+        for (p in Layout.contentPoints()) {
+            val q = Layout.toContent(Layout.toVolume(p))
+            assertTrue("$p -> $q", (q - p).length < 1e-5f)
+        }
+    }
+
+    /** QA #1 known issue + D54: from the default 1.75 m eye-height spot the comb is seen from >= 12° above its plane, box below the eye line. */
+    @Test fun combFacesTheUserAndTheBoxSitsBelowTheEyes() {
+        val eye = Layout.eyesVolume()["emulatorDefault"]!!
+        val mid = Layout.toVolume(V3(Layout.tineX(4), Layout.TINE_Y, (Layout.TINE_ROOT_Z + Layout.TINE_TIP_Z) / 2))
+        // the comb plane's normal (content +Y) in the volume frame
+        val n = Layout.toVolume(V3(0f, 1f, 0f), lift = 0f)
+        val d = eye - mid
+        val elev = Math.toDegrees(kotlin.math.asin(((d.x * n.x + d.y * n.y + d.z * n.z) / d.length).toDouble()))
+        val before = run {
+            val m0 = V3(Layout.tineX(4), Layout.TINE_Y, (Layout.TINE_ROOT_Z + Layout.TINE_TIP_Z) / 2); val d0 = eye - m0
+            Math.toDegrees(kotlin.math.asin((d0.y / d0.length).toDouble()))
+        }
+        assertTrue("comb seen from $elev° above its plane (was $before°)", elev >= before + 11 && elev >= 12)
+        // D54: the whole box top (closed) is below the eye line from every design eye and the default spot
+        for ((name, e) in Layout.eyesVolume()) for (x in listOf(Layout.BX0, Layout.BX1)) for (z in listOf(Layout.BZ0, Layout.BZ1)) {
+            val top = Layout.toVolume(V3(x, Layout.BY1, z))
+            assertTrue("box top $top above eye $name", top.y < e.y)
+        }
     }
 
     /** D25: dancer.glb (tools/calibrate_dancer.py) toe at the origin, 0.095 m tall, fits the well, OPAQUE. */

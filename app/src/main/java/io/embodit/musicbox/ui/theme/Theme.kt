@@ -30,6 +30,12 @@ object MBColors {
     val InkSecondary = Color(0xFF3A3F44)
     val Amber = Color(0xFFE0A040)
     val TagFace = Color(0xFFFBF6EC)
+    /** The near-hint card (first open: pull the box closer) — warm amber face so it reads before anything else. */
+    val NearFace = Color(0xFFFFE6B8)
+    /** The mini roll on the Tunes page. */
+    val RollFace = Color(0xFFF1E4CC)
+    val RollLine = Color(0xFFD9C7A6)
+    val RollLineStrong = Color(0xFFA88A58)
     val Brass = Color(0xFFC9A25A)
     val BrassDim = Color(0xFF5A4A2A)
     val Velvet = Color(0xFF5A1A2A)

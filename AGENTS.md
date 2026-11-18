@@ -1,6 +1,6 @@
 # 八音盒 Music Box: project guidance
 
-Package `io.embodit.musicbox`, v0.1.0, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
+Package `io.embodit.musicbox`, v0.1.1, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
 `apps/music-box/design-package.json` (gate B passed 2026-11-05, default options: scale k = 1.28, 8 tines, no import,
 dancer B, lid closed at start). Skeleton from the factory's klotski-box project (CloudAir lineage: two containers, theme,
 board-input template, debug receiver); everything music-box is new.
@@ -8,7 +8,9 @@ board-input template, debug receiver); everything music-box is new.
 ## Surfaces
 - **Box volume** (default container `MusicBoxVolume`, Volumetric 0.64 x 0.512 x 0.474 m = design 0.50 x 0.40 x 0.37 x 1.28,
   fixed scale, gravity aligned, uniform resize). The content root scales with the measured volume (`BoxScene.setScale`),
-  so a resized volume keeps the box filling it; drum drags convert hand travel by the same scale.
+  so a resized volume keeps the box filling it; drum drags convert hand travel by the same scale. v0.1.1: the content
+  leans its top 12° toward the user and rises 1.9 cm (`Layout.TILT_DEG` / `TILT_LIFT`, `Layout.toVolume`) so the comb is
+  not edge-on from the system's 1.75 m eye-height spot (QA #1 known issue, D54); LayoutTest re-checks ±39° and the volume.
 - **Control window** (`MusicBoxControl`, Planar 560 x 600 dp, `Placement.right(box)`): native SpatialUI `TabBar`, three pages
   播放 / 曲子 / 设置; confirmations (clear / delete / quit) and 怎么操作 unfold in place. The app never reads the head pose.
   System [×] on the panel = P5: tap the brass nameplate to reopen it (same id + tag, beside the box).
@@ -52,10 +54,11 @@ or `hold off`.
 | B4 播放 | `goto B4` | frozen 40 ms after the chord at column 8: tines bent, notes in the air |
 | B4r 慢下来 | `goto B4r` | spring 6 steps, frozen |
 | B5 拨滚筒 | `goto B5` | drum dragged 3 cm, frozen |
-| B6 钉谱 | `goto B6` (my tune) · `goto B6fork` (preset -> 另存) · `goto B6full` (6 tunes -> 满了) | |
+| B6 钉谱 | `goto B6` (my tune) · `goto B6fork` (0 tunes, preset -> 另存) · `goto B6full` (6 tunes -> 满了) | edit view open |
+| 钉谱 edit view | `goto EDIT` (lid open) · `goto EDITclosed` (keys grey, "先开盖") · `edit on|off` | TabBar hidden |
 | B7 合着有弦 | `goto B7` | 5 cells lit |
 | B8 换曲 / B9 倒回 | `goto B8` · `goto B9` | frozen mid-animation |
-| P2 曲子 | `goto P2` · `goto P2mine` (0 tunes) · `goto P2full` (6 tunes) | |
+| P2 曲子 | `goto P2` · `goto P2mine` (0 tunes) · `goto P2mine1..5` · `goto P2full` (6 tunes) | 我的: on-drum card + roll |
 | P3 设置 / 怎么操作 | `goto P3` · `goto HOW` | |
 | P4 确认 | `goto P4clear` · `goto P4delete` · `goto P4quit` · `yes` / `no` | |
 | P5 面板关了 | `goto P5` (lid closed, nameplate breathes) · `goto P5open` · `tap nameplate` reopens | |

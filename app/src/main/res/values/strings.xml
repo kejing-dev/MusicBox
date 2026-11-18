@@ -48,7 +48,7 @@
     <string name="new_full">Full. Delete one first</string>
     <string name="btn_delete">Delete</string>
     <string name="mine_line">%1$d pins · %2$s</string>
-    <string name="mine_empty">No tunes of your own yet. Tap New tune, or change a classic and it saves a copy here.</string>
+    <string name="mine_empty">No tunes of your own yet. Change a classic, or tap New tune for an empty drum.</string>
     <string name="mine_room">Room for %1$d more. Change a classic and it saves a copy here.</string>
     <string name="now_playing">On the drum</string>
 
@@ -90,4 +90,11 @@
     <string name="confirm_quit_line">Your tunes are saved.</string>
     <string name="confirm_yes_quit">Quit</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="btn_edit_pins">Edit pins…</string>
+    <string name="btn_edit_done">Done</string>
+    <string name="btn_change_this">Change it</string>
+    <string name="btn_clear_pins">Clear…</string>
+    <string name="card_on_drum">On the drum: %1$s</string>
+    <string name="card_pins">%1$d pins · %2$d columns</string>
+    <string name="edit_caption">Tap a tine to pin · %1$d pins · column %2$d of %3$d</string>
 </resources>
