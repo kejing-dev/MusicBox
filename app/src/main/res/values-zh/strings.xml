@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">八音盒</string>
+    <string name="lang_code">zh</string>
+
+    <string name="line_loading">木盒拿出来了，等一下</string>
+    <string name="line_B1">点一下盒盖，打开看看</string>
+    <string name="line_B2">拧右边的钥匙，或者点一根齿</string>
+    <string name="line_B3">再拧几下</string>
+    <string name="line_B4">在唱呢。想加音就点齿</string>
+    <string name="line_B4r">快没劲了</string>
+    <string name="line_B5">往下拨正着唱，往上拨倒着唱</string>
+    <string name="line_B6add">钉上了。要和弦就退一拍再点</string>
+    <string name="line_B6remove">拔掉了</string>
+    <string name="line_B7">上好弦了，开盖就唱</string>
+    <string name="line_presetFork">改动另存了一份</string>
+    <string name="line_full">我的曲子满了，先删一首</string>
+    <string name="line_lidClosedEdit">先开盖</string>
+    <string name="line_playingEdit">停下再改</string>
+    <string name="line_P5">点铜牌，面板就回来</string>
+    <string name="line_nearHint">先拉近一点，拉到一臂远</string>
+    <string name="line_coachPin">点一根齿，钉一颗你自己的</string>
+
+    <string name="tab_play">播放</string>
+    <string name="tab_songs">曲子</string>
+    <string name="tab_settings">设置</string>
+
+    <string name="btn_wind_play">上弦并播放</string>
+    <string name="btn_stop">停</string>
+    <string name="btn_back">◂ 退一拍</string>
+    <string name="btn_rest">空一拍 ▸</string>
+    <string name="btn_undo">撤销</string>
+    <string name="btn_clear">清空</string>
+    <string name="btn_mute">静音</string>
+    <string name="btn_muted">已静音</string>
+    <string name="spring_label">发条</string>
+    <string name="speed_label">快慢</string>
+    <string name="pins_line">%1$d 颗钉 · 第 %2$d 列，共 %3$d 列</string>
+
+    <string name="songs_label">曲子</string>
+    <string name="seg_presets">曲子</string>
+    <string name="seg_mine">我的</string>
+    <string name="btn_new_tune">新曲子</string>
+    <string name="new_full">满了，先删一首</string>
+    <string name="btn_delete">删除</string>
+    <string name="mine_line">%1$d 颗钉 · %2$s</string>
+    <string name="mine_empty">还没有自己的曲子。点「新曲子」，或者改一首老曲子，会自动另存在这里。</string>
+    <string name="now_playing">在滚筒上</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_language">语言</string>
+    <string name="lang_system">跟随系统</string>
+    <string name="lang_zh">中文</string>
+    <string name="lang_en">English</string>
+    <string name="settings_volume">音量</string>
+    <string name="settings_finish">漆面</string>
+    <string name="finish_walnut">胡桃木</string>
+    <string name="finish_maple">枫木</string>
+    <string name="finish_red">红漆</string>
+    <string name="settings_coach">新手引导重来</string>
+    <string name="settings_how">怎么操作</string>
+    <string name="settings_about_label">关于</string>
+    <string name="settings_about_text">v%1$s · 曲子公版 · 音效 CC0 · Noto Sans OFL</string>
+    <string name="settings_exit">退出应用</string>
+    <string name="btn_close_how">回到设置</string>
+
+    <string name="how_to_title">怎么操作</string>
+    <string name="how_to_lid">开 / 合盒盖：捏一下盒盖 · 手柄指着盒盖按扳机</string>
+    <string name="how_to_pin">钉一颗：捏一下某根齿 · 扳机点齿。点已经钉过的那列就拔掉</string>
+    <string name="how_to_wind">上弦：捏一下钥匙 +25%，或捏住往下拉 · 扳机同样</string>
+    <string name="how_to_scrub">手拨滚筒：捏住滚筒上下拉 · 按住扳机上下移</string>
+    <string name="how_to_panel">面板没了：点盒子正面的铜牌</string>
+    <string name="how_to_move">挪动、放大盒子：用盒子下面的横条</string>
+
+    <string name="confirm_clear">把这首的钉全拔了？</string>
+    <string name="confirm_clear_line">撤销还能找回来。</string>
+    <string name="confirm_yes_clear">全拔</string>
+    <string name="confirm_delete">删掉「%1$s」？</string>
+    <string name="confirm_delete_line">删了就没了。</string>
+    <string name="confirm_yes_delete">删掉</string>
+    <string name="confirm_quit">退出八音盒？</string>
+    <string name="confirm_quit_line">你的曲子都存好了。</string>
+    <string name="confirm_yes_quit">退出</string>
+    <string name="btn_cancel">取消</string>
+</resources>

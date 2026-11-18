@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music Box</string>
+    <string name="lang_code">en</string>
+
+    <!-- card / status lines (design content.tone.cardLines, one table for the lid card and the panel, D38) -->
+    <string name="line_loading">Getting the box out</string>
+    <string name="line_B1">Tap the lid. Take a peek</string>
+    <string name="line_B2">Wind the key, or tap a tine</string>
+    <string name="line_B3">A few more turns</string>
+    <string name="line_B4">Playing. Tap a tine to add a note</string>
+    <string name="line_B4r">Running down</string>
+    <string name="line_B5">Down plays forward, up plays back</string>
+    <string name="line_B6add">Pinned. Step back for a chord</string>
+    <string name="line_B6remove">Pin pulled</string>
+    <string name="line_B7">Wound up. Open the lid</string>
+    <string name="line_presetFork">Saved as your own copy</string>
+    <string name="line_full">My tunes are full. Delete one first</string>
+    <string name="line_lidClosedEdit">Open the lid first</string>
+    <string name="line_playingEdit">Stop to edit</string>
+    <string name="line_P5">Tap the brass plate for the panel</string>
+    <string name="line_nearHint">Pull it closer, about arm\'s length</string>
+    <string name="line_coachPin">Tap a tine to pin one of your own</string>
+
+    <!-- tabs -->
+    <string name="tab_play">Play</string>
+    <string name="tab_songs">Tunes</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- play page -->
+    <string name="btn_wind_play">Wind &amp; play</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_back">◂ Back</string>
+    <string name="btn_rest">Rest ▸</string>
+    <string name="btn_undo">Undo</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_mute">Mute</string>
+    <string name="btn_muted">Muted</string>
+    <string name="spring_label">Spring</string>
+    <string name="speed_label">Speed</string>
+    <string name="pins_line">%1$d pins · column %2$d of %3$d</string>
+
+    <!-- songs page -->
+    <string name="songs_label">Tunes</string>
+    <string name="seg_presets">Classics</string>
+    <string name="seg_mine">Mine</string>
+    <string name="btn_new_tune">New tune</string>
+    <string name="new_full">Full. Delete one first</string>
+    <string name="btn_delete">Delete</string>
+    <string name="mine_line">%1$d pins · %2$s</string>
+    <string name="mine_empty">No tunes of your own yet. Tap New tune, or change a classic and it saves a copy here.</string>
+    <string name="now_playing">On the drum</string>
+
+    <!-- settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="lang_system">System</string>
+    <string name="lang_zh">中文</string>
+    <string name="lang_en">English</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_finish">Finish</string>
+    <string name="finish_walnut">Walnut</string>
+    <string name="finish_maple">Maple</string>
+    <string name="finish_red">Red lacquer</string>
+    <string name="settings_coach">Show the tips again</string>
+    <string name="settings_how">How to play</string>
+    <string name="settings_about_label">About</string>
+    <string name="settings_about_text">v%1$s · Tunes public domain · Sounds CC0 · Noto Sans OFL</string>
+    <string name="settings_exit">Quit app</string>
+    <string name="btn_close_how">Back to settings</string>
+
+    <!-- how to (B19: one line per main action, gesture + controller) -->
+    <string name="how_to_title">How to play</string>
+    <string name="how_to_lid">Open or close the lid: pinch the lid · or point and pull the trigger</string>
+    <string name="how_to_pin">Pin a note: pinch a tine · trigger on a tine. Tap a pinned one to pull it</string>
+    <string name="how_to_wind">Wind it: pinch the key once (+25%), or pinch and pull down · same with the trigger</string>
+    <string name="how_to_scrub">Turn the drum by hand: pinch it and move up or down · hold the trigger and move</string>
+    <string name="how_to_panel">Panel gone? Tap the brass plate on the front</string>
+    <string name="how_to_move">Move or resize the box with the bar under it</string>
+
+    <!-- confirmations (P4) -->
+    <string name="confirm_clear">Pull every pin?</string>
+    <string name="confirm_clear_line">Undo can bring them back.</string>
+    <string name="confirm_yes_clear">Clear</string>
+    <string name="confirm_delete">Delete \"%1$s\"?</string>
+    <string name="confirm_delete_line">It\'s gone for good.</string>
+    <string name="confirm_yes_delete">Delete</string>
+    <string name="confirm_quit">Quit Music Box?</string>
+    <string name="confirm_quit_line">Your tunes are saved.</string>
+    <string name="confirm_yes_quit">Quit</string>
+    <string name="btn_cancel">Cancel</string>
+</resources>
