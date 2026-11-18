@@ -155,7 +155,7 @@ class MusicBox(
         scrubbing || (snapping && snapPluck && !running) -> BoxState.SCRUB
         !lidOpen -> if (spring > 0) BoxState.LID_PAUSED else BoxState.CLOSED
         keyDragging && !running -> BoxState.WINDING
-        running && !finishing && spring <= rundown(s0) && spring <= 8.0 -> BoxState.RUNDOWN
+        running && (finishing || spring <= 8.0) -> BoxState.RUNDOWN   // design B4 exit: spring <= 8 steps (the slowdown itself is the last rd)
         running -> BoxState.PLAYING
         t - lastPinAt < EDIT_STEP_S -> BoxState.PINNING
         else -> BoxState.OPEN

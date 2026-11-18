@@ -233,7 +233,7 @@ class SoundPlayer(context: Context) {
                 val id = tine[r]
                 if (!ok(id)) return
                 val old = tineStream[r]
-                if (old != 0) { pool.setVolume(old, 0.35f * g, 0.35f * g); main.postDelayed({ pool.stop(old) }, 10) }
+                if (old != 0) { pool.setVolume(old, 0.15f * g, 0.15f * g); main.postDelayed({ pool.stop(old) }, 10) }
                 val v = if (s.soft) 0.4f * g else g
                 val st = pool.play(id, v, v, 2, 0, 1f)
                 tineStream[r] = st

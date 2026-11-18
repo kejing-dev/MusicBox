@@ -41,8 +41,9 @@ NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#":
 # tine -> (target note, recorded source)
 TINES = [("C5", "D5"), ("D5", "D5"), ("E5", "E5"), ("F5", "E5"), ("G5", "G5"), ("A5", "A5"), ("B5", "B5"), ("C6", "C#6")]
 TINE_LEN = 2.6
-TINE_RMS = -16.0  # dBFS over 30-400 ms (the ring)
+TINE_RMS = -18.8  # dBFS over 30-400 ms (the ring)
 TINE_PEAK = -3.0
+ATTACK = 1.25     # the raw pluck attack is held to <= +2 dB over the ring, so chords keep headroom
 
 
 def freq(note):
@@ -136,8 +137,8 @@ def declick(x):
     ring_peak = np.abs(tail[i1:int(0.2 * SR)]).max()
     head = x.copy()
     hp_ = np.abs(head[:i1]).max()
-    if hp_ > 2.0 * ring_peak:
-        head[:i1] *= 2.0 * ring_peak / hp_
+    if hp_ > ATTACK * ring_peak:
+        head[:i1] *= ATTACK * ring_peak / hp_
     w = np.zeros(len(x)); w[:i0] = 1; w[i0:i1] = np.linspace(1, 0, i1 - i0)
     y = head * w + tail * (1 - w)
     # click riding: a plucked tine only decays, so any 5 ms window louder than the recent past is a leftover click

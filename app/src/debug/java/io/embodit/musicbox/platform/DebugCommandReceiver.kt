@@ -6,6 +6,7 @@ import android.content.Intent
 import android.util.Log
 import io.embodit.musicbox.domain.Finish
 import io.embodit.musicbox.domain.Language
+import io.embodit.musicbox.domain.MusicBox
 import io.embodit.musicbox.domain.Pin
 import io.embodit.musicbox.ui.Confirm
 import io.embodit.musicbox.ui.Page
@@ -53,6 +54,7 @@ class DebugCommandReceiver : BroadcastReceiver() {
                 b.stop(); b.selectSong("twinkle", animate = false); b.debugLidInstant(false); b.debugSetPos(0)
             }
             Ui.page = Page.PLAY; Ui.confirm = null; Ui.howTo = false; Ui.songsTab = 0
+            ctl.debugNearHint(false)
         }
         fun open() = ctl.act("lid open") { it.debugLidInstant(true) }
         fun tap(name: String) = routeTap(graph, scene, name)
@@ -80,14 +82,15 @@ class DebugCommandReceiver : BroadcastReceiver() {
                 reset()
                 when (a) {
                     "B1" -> Unit
+                    "B1near" -> ctl.debugNearHint(true)
                     "B2" -> open()
                     "B3" -> { open(); later(700) { drag("key", 3f) }; later(1300) { hold(0) } }
-                    "B4" -> { open(); ctl.act("goto B4") { it.windAndPlay() }; later(400) { hold(1950) } }
+                    "B4" -> { open(); ctl.act("goto B4") { it.windAndPlay(); it.freezeAt = it.t + MusicBox.REWIND_S + 8 * 60.0 / it.bpm / it.speed + 0.04 } }
                     "B4r" -> { open(); ctl.act("goto B4r") { it.debugSetPos(40); it.setSpringFraction(6.0 / 64) }; later(300) { hold(700) } }
                     "B5" -> { open(); later(600) { drag("drum", 3f) }; later(1100) { hold(0) } }
                     "B6" -> { open(); ctl.act("goto B6") { b -> b.selectSong(b.mine.firstOrNull()?.id ?: b.newSong()!!.id) }; later(700) { tap("tine:4"); hold(60) } }
-                    "B6fork" -> { open(); later(700) { ctl.act("goto fork") { it.debugSetPos(48) }; tap("tine:0") } }
-                    "B6full" -> { mine(6); open(); later(700) { ctl.act("goto full") { it.debugSetPos(48) }; tap("tine:0") } }
+                    "B6fork" -> { open(); later(700) { ctl.act("goto fork") { it.debugSetPos(48) }; tap("tine:0"); hold(300) } }
+                    "B6full" -> { mine(6); open(); later(700) { ctl.act("goto full") { it.debugSetPos(48) }; tap("tine:0"); hold(300) } }
                     "B7" -> { ctl.act("goto B7") { it.setSpringFraction(5.0 / 8) } }
                     "B8" -> { open(); later(700) { ctl.act("goto B8") { it.selectSong("ode"); it.freezeAt = it.t + 0.1 } } }
                     "B9" -> { open(); ctl.act("goto B9") { it.debugSetPos(20) }; later(700) { ctl.act("goto B9b") { it.windAndPlay(); it.freezeAt = it.t + 0.15 } } }

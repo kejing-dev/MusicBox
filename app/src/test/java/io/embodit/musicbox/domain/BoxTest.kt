@@ -184,6 +184,14 @@ class BoxTest {
         assertEquals(BoxState.OPEN, b.state())
     }
 
+    @Test fun runningDownBelowEightSteps() {
+        val b = box(song = "jingle")
+        b.setSpringFraction(20.0 / 64)
+        b.advance(0.1); assertEquals(BoxState.PLAYING, b.state())
+        b.advance(6.5); assertEquals(BoxState.RUNDOWN, b.state())
+        assertEquals("B4r", Lines.key(Lines.Ctx(b.state(), null)))
+    }
+
     @Test fun windAndPlayOnAFullPresetDoesNotOverflow() {
         val b = box(song = "jingle")
         b.windAndPlay(); b.advance(0.35)

@@ -183,6 +183,7 @@ internal class BoxListener(private val graph: Graph, private val scene: BoxScene
         routeTap(graph, scene, target)
     }
 
+    // gate:allow shared-drag gate B 2026-11-05 (default plan, user approved Shared Space): dragging the key / drum is the optional hand-feel path; every main action has a one-tap twin (tap key = +25 %, [上弦并播放], ◂ / ▸)
     override fun onDragStart(target: String, source: InputSource): Boolean {
         val h = BoxNames.hitOf(target)
         BoardInputLog.write(TAG, "INPUT drag src=${source.label} target=$target -> part=$h")
