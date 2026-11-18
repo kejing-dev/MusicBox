@@ -49,6 +49,7 @@
     <string name="btn_delete">Delete</string>
     <string name="mine_line">%1$d pins · %2$s</string>
     <string name="mine_empty">No tunes of your own yet. Tap New tune, or change a classic and it saves a copy here.</string>
+    <string name="mine_room">Room for %1$d more. Change a classic and it saves a copy here.</string>
     <string name="now_playing">On the drum</string>
 
     <!-- settings -->

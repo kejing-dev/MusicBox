@@ -150,7 +150,7 @@ private fun LoadingPage(settings: Settings, graph: Graph) {
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator()
             Spacer(Modifier.height(16.dp))
-            Txt(stringResource(R.string.line_loading), "loading/line", style = PicoTheme.typography.titleMedium)
+            Txt(stringResource(R.string.line_loading), "loading/line", style = PicoTheme.typography.titleMedium, color = MBColors.Ink)
         }
     }
 }
@@ -220,17 +220,17 @@ private fun SongsPage(ui: BoxUi, settings: Settings, graph: Graph) {
             Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.SpaceBetween) {
                 ui.presets.forEach { s -> SongRow(s, zh, s.id == ui.song?.id, sub = "${s.tag(zh)} · ${s.lic(zh)}", graph = graph, onDelete = null) }
             }
-        } else if (ui.mine.isEmpty()) {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                Txt(stringResource(R.string.mine_empty), "songs/empty", style = PicoTheme.typography.titleMedium, color = MBColors.InkSecondary, maxLines = 3, align = TextAlign.Center)
-            }
         } else {
+            // my tunes from the top, then one card with what this list is for (fills the rest: no blank band, D44)
             val fmt = remember { SimpleDateFormat("MM-dd HH:mm", Locale.US) }
-            Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = if (ui.mine.size >= 4) Arrangement.SpaceBetween else Arrangement.Center) {
-                ui.mine.forEachIndexed { i, s ->
-                    if (i > 0 && ui.mine.size < 4) Spacer(Modifier.height(16.dp))
-                    SongRow(s, zh, s.id == ui.song?.id, sub = stringResource(R.string.mine_line, s.pins.size, fmt.format(Date(s.updatedAt))), graph = graph,
-                        onDelete = { Ui.confirm = Confirm.Delete(s.id); Log.i(TAG, "CONFIRM delete ${s.id} P4") })
+            ui.mine.forEach { s ->
+                SongRow(s, zh, s.id == ui.song?.id, sub = stringResource(R.string.mine_line, s.pins.size, fmt.format(Date(s.updatedAt))), graph = graph,
+                    onDelete = { Ui.confirm = Confirm.Delete(s.id); Log.i(TAG, "CONFIRM delete ${s.id} P4") })
+            }
+            if (ui.mine.size < Drum.MY_CAP) {
+                Box(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(24.dp)).background(MBColors.TagFace).padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+                    Txt(if (ui.mine.isEmpty()) stringResource(R.string.mine_empty) else stringResource(R.string.mine_room, Drum.MY_CAP - ui.mine.size),
+                        "songs/empty", style = PicoTheme.typography.titleMedium, color = MBColors.InkSecondary, maxLines = 3, align = TextAlign.Center)
                 }
             }
         }

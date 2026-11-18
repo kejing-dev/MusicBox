@@ -45,6 +45,7 @@
     <string name="btn_delete">删除</string>
     <string name="mine_line">%1$d 颗钉 · %2$s</string>
     <string name="mine_empty">还没有自己的曲子。点「新曲子」，或者改一首老曲子，会自动另存在这里。</string>
+    <string name="mine_room">还能再存 %1$d 首。改一首老曲子，也会自动另存到这里。</string>
     <string name="now_playing">在滚筒上</string>
 
     <string name="settings_title">设置</string>
