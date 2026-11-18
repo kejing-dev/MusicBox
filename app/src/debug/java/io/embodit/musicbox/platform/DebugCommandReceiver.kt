@@ -55,6 +55,7 @@ class DebugCommandReceiver : BroadcastReceiver() {
             }
             Ui.page = Page.PLAY; Ui.confirm = null; Ui.howTo = false; Ui.songsTab = 0
             ctl.debugNearHint(false)
+            if (!graph.window.panelOpen) graph.window.open("reset")
         }
         fun open() = ctl.act("lid open") { it.debugLidInstant(true) }
         fun tap(name: String) = routeTap(graph, scene, name)

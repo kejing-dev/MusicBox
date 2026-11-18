@@ -417,7 +417,7 @@ class MusicBox(
         val s = (presets + mine).firstOrNull { it.id == id } ?: return false
         if (loading || !animate) {
             song = s; bpm = s.bpm; pos = 0.0; visStart = -1.0; rewindStart = -1.0; swapStart = -10.0
-            running = false; ff = false; finishing = false; scrubbing = false; snapping = false; playAfterOpen = false
+            running = false; ff = false; finishing = false; scrubbing = false; snapping = false; playAfterOpen = false; keyDragging = false
             spring = 0.0; s0 = 0.0; undo.clear(); pinGone.clear(); pinAddedAt.clear(); notice = null
             return true
         }
