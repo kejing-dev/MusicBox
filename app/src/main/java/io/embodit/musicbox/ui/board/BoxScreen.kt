@@ -193,6 +193,7 @@ internal class BoxListener(private val graph: Graph, private val scene: BoxScene
             BoxNames.DrumHit -> { graph.box.act("drum drag") { it.scrubStart() }; h }
             else -> null
         }
+        if (dragging != null) graph.releaseHeld = { endDrag() }
         return dragging != null
     }
 
@@ -210,6 +211,7 @@ internal class BoxListener(private val graph: Graph, private val scene: BoxScene
     override fun onDragCancel() { endDrag() }
 
     private fun endDrag() {
+        graph.releaseHeld = null
         when (dragging) {
             BoxNames.Key -> graph.box.act("key release") { it.keyDragEnd() }
             BoxNames.DrumHit -> graph.box.act("drum release") { it.endScrub() }

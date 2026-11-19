@@ -45,6 +45,24 @@ class SpatialApplication : Application() {
         super.onCreate()
         io.embodit.musicbox.ui.board.input.BoardInputLog.attach(this)
         graph = Graph(this)
+        // QA #4 q4-1 (D60): controller B arrives as KEYCODE_BACK. Every activity of the app (the box's LaunchActivity and
+        // the control window's stub activity) takes BACK itself, so neither the window nor the box goes away on B.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {
+                val ca = a as? androidx.activity.ComponentActivity
+                if (ca == null) { Log.w(TAG, "BACK guard: ${a.javaClass.simpleName} is not a ComponentActivity"); return }
+                ca.onBackPressedDispatcher.addCallback(ca, object : androidx.activity.OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() { graph.onBack(a.javaClass.simpleName) }
+                })
+                Log.i(TAG, "BACK guard on ${a.javaClass.simpleName}")
+            }
+            override fun onActivityStarted(a: android.app.Activity) {}
+            override fun onActivityResumed(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivityStopped(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
+        })
         launch(::mainApp)
     }
 }
@@ -70,6 +88,21 @@ class Graph(context: Context) {
         box.start()
         // the box and a preview never sound together: a pluck from the drum ends the preview (Preview.start stops the drum)
         box.onPluck = { preview.stop("drum plays") }
+    }
+
+    /** Set by the box's input listener while the key / drum is held (a drag in progress); BACK calls it to let go. */
+    @Volatile var releaseHeld: (() -> Unit)? = null
+
+    /** Controller B / system BACK (D60): let go, reopen the window, or nothing. Never exits, never backgrounds. */
+    fun onBack(from: String) {
+        val release = releaseHeld
+        val act = io.embodit.musicbox.domain.BackKey.decide(release != null, window.panelOpen)
+        Log.i(TAG, "BACK from=$from holding=${release != null} panel=${window.panelState} -> $act")
+        when (act) {
+            io.embodit.musicbox.domain.BackKey.Act.RELEASE_HELD -> release?.invoke()
+            io.embodit.musicbox.domain.BackKey.Act.OPEN_WINDOW -> window.open("back")
+            io.embodit.musicbox.domain.BackKey.Act.NOTHING -> Unit
+        }
     }
 
     companion object {

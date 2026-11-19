@@ -1,6 +1,6 @@
 # 八音盒 Music Box: project guidance
 
-Package `io.embodit.musicbox`, v0.1.3, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
+Package `io.embodit.musicbox`, v0.1.4, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
 `apps/music-box/design-package.json` (gate B passed 2026-11-05, default options: scale k = 1.28, 18 tines G4..C6 since v0.1.3 (was 8), no import,
 dancer B, lid closed at start). Skeleton from the factory's klotski-box project (CloudAir lineage: two containers, theme,
 board-input template, debug receiver); everything music-box is new.
@@ -26,6 +26,11 @@ board-input template, debug receiver); everything music-box is new.
 | `ui/board/*` | `BoxScene` (entities, per-frame drawing via `BoxFrameSystem`), `BoxScreen` (loading, scale, board-input wiring), textures |
 | `ui/control/*` | the window pages; every Text logs `OVERFLOW <tag>` when cut |
 | `tools/` | asset builders (see README), `mb.sh` harness, `loudness.py`, `contrast.py`, `blank.py` |
+
+**Controller B = BACK (v0.1.4, D60 / QA #4 q4-1)**: `SpatialApplication` adds an `OnBackPressedCallback` to every activity
+(the box's LaunchActivity + the control window's stub) -> `Graph.onBack` -> `domain/BackKey.decide`: key / drum held (drag in
+progress, `Graph.releaseHeld`) = let go; control window closed = reopen it beside the box; window open = nothing. Never
+exits or backgrounds. Log line `BACK from=<activity> holding=… panel=… -> <act>`. Test: `adb shell input keyevent KEYCODE_BACK`.
 
 Holders (board-input): `lid` (closed: whole lid; open: top 4 cm), `tine:0..17` (0 = G4, 5 = C5, 17 = C6), `drum` (capsule, drag only), `key`
 (tap = +25 %, drag down = wind), `nameplate` (reopens the panel). Box body, dancer, notes, card, gauge take no hits.
@@ -68,7 +73,9 @@ Other: `tap lid|key|nameplate|drum|tine N`, `drag key|drum <cm>`, `spring 0..1`,
 `orient on|off` (F↑ test textures, D10), `replay "<holder>"`, `dump`.
 
 ## Comb + tunes (v0.1.3)
-The comb is 18 tines, G4..C6 with every semitone (`Drum.TINES`, `Comb` in `domain/Song.kt`: names, numbered notation,
+Comb labels (v0.1.4, QA #4 q4-2): the strip (`Layout.LABELS`, 45° toward the user) rests 1 mm above the lowered front
+wall (WIN_TOP), so the low-octave dots under 5 #5 6 #6 7 show; `Layout.labelPoint` + LayoutTest check every texture row
+from all eyes. The comb is 18 tines, G4..C6 with every semitone (`Drum.TINES`, `Comb` in `domain/Song.kt`: names, numbered notation,
 colours; `Layout.tineX / tineLen / tineRootZ`). `tools/songs.py` writes `app/src/main/assets/songs.txt` (26 classics,
 first line `#comb 18 G4-C6`, tines 1..18; field 11 = group kids / folk / classic / holiday). A file without that header
 (my tunes saved by v0.1.0–v0.1.2, tines 1..8 = C5..C6) is read through `Drum.FROM_V1`, so nothing changes pitch.

@@ -108,9 +108,26 @@ object Layout {
     const val GAUGE_X0 = 0.08f; const val GAUGE_X1 = 0.16f
     const val GAUGE_W = 0.008f; const val GAUGE_H = 0.012f
     fun gaugeX(i: Int): Float = GAUGE_X0 + (GAUGE_X1 - GAUGE_X0) * (i + 0.5f) / 8f
-    /** Comb label strip on the lowered front wall's sill, tilted 45° toward the user. */
-    val LABELS = V3(0.055f, -0.1085f, 0.104f)
+    /**
+     * Comb label strip on the lowered front wall's sill, tilted 45° toward the user. v0.1.4 (QA #4 q4-2): the centre was
+     * at y -0.1085, so the strip's lower 2 mm sat inside the front wall (top WIN_TOP -0.110) and the low-octave dots
+     * (texture row 88 of 102) were hidden; it now rests 1 mm above the sill, every row of the texture above the wall.
+     */
+    val LABELS = V3(0.055f, -0.1054f, 0.104f)
     const val LABELS_W = 0.20f; const val LABELS_H = 0.010f
+    const val LABELS_TILT_DEG = 45f
+    /** Texture row of the low-octave dot (BoxTextures.labels, 102 px tall) as a fraction from the top. */
+    const val LABEL_LOW_DOT_V = 88f / 102f
+    const val LABEL_HIGH_DOT_V = 28f / 102f
+
+    /** Point on the label strip at content x [x], [v] = 0 top edge .. 1 bottom edge (the strip leans its top back). */
+    fun labelPoint(x: Float, v: Float, out: Float = 0.0005f): V3 {
+        val a = Math.toRadians(LABELS_TILT_DEG.toDouble())
+        val local = LABELS_H * (0.5f - v)              // + up the strip
+        val y = LABELS.y + local * cos(a).toFloat() + out * sin(a).toFloat()
+        val z = LABELS.z - local * sin(a).toFloat() + out * cos(a).toFloat()
+        return V3(x, y, z)
+    }
 
     // song card on the lid's inner face: 0.30 x 0.07, 0.132..0.203 m from the hinge, x -0.17..+0.13
     const val CARD_W = 0.30f; const val CARD_H = 0.07f

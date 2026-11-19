@@ -48,6 +48,20 @@ class LayoutTest {
             }
             // the label strip (colour dot + number) under each tine
             assertEquals("label $r from $n", null, blocked(e, V3(x, Layout.LABELS.y + 0.002f, Layout.LABELS.z + 0.002f), Layout.solids(true)))
+            // QA #4 q4-2: the low-octave dot row (and the high dot, the digits, the bottom edge) is seen, not under the wall
+            for (v in listOf(Layout.LABEL_HIGH_DOT_V, 0.5f, Layout.LABEL_LOW_DOT_V, 0.97f)) {
+                assertEquals("label $r v=$v from $n", null, blocked(e, Layout.labelPoint(x, v), Layout.solids(true)))
+            }
+        }
+    }
+
+    @Test fun labelStripAboveTheFrontWall() {
+        // every texture row above the lowered wall's top (WIN_TOP) and in front of the tines' click boxes
+        for (v in listOf(0f, Layout.LABEL_LOW_DOT_V, 1f)) {
+            val p = Layout.labelPoint(Layout.LABELS.x, v, out = 0f)
+            assertTrue("label v=$v y=${p.y} above wall ${Layout.WIN_TOP}", p.y > Layout.WIN_TOP + 0.0005f)
+            assertTrue("label v=$v z=${p.z} in front of the tines", p.z > Layout.TINE_HIT_Z1)
+            assertTrue("label v=$v z=${p.z} inside the box front", p.z < Layout.BZ1)
         }
     }
 

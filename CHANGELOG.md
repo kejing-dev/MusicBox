@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## v0.1.4 · 2026-11-19
+
+- 手柄 B（系统返回键）不再关掉控制窗、也不会把八音盒退到后台：拿着钥匙 / 滚筒时 = 松手，控制窗关着 = 在盒子旁重开，开着 = 什么也不做
+- 音梳中文标签条抬高 3 mm，不再被盒子前壁挡住下沿：低音 5 #5 6 #6 7 下面的点看得见了
+- Controller B (system Back) no longer closes the control window or sends the music box to the background: holding the key / drum = let go, window closed = reopen it beside the box, window open = nothing
+- The comb label strip sits 3 mm higher, clear of the front wall, so the low-octave dots under 5 #5 6 #6 7 show
+
 ## v0.1.3 · 2026-11-18
 
 - 音梳从 8 齿加宽到 18 齿：G4–C6 半音齐全，真实比例（齿距 10.8 mm，低音齿 5.2 cm 到高音 3.2 cm，底座斜切）；原来 8 根齿的声音逐字节不变
