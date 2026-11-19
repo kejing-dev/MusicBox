@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
  *
  *   reset                         stop, twinkle, lid closed, spring 0, column 0, panel on Play, no confirm, unfrozen
  *   goto B1|B2|B3|B4|B4r|B5|B6|B6fork|B6full|B7|B8|B9|P2|P2mine|P2mine1..5|P2full|P3|P4clear|P4delete|P4quit|P5|P5open|HOW|EDIT|EDITclosed
- *   tap lid|key|nameplate|drum|tine N      a pinch on that part          drag key|drum <cm>   (+ = down)
+ *   tap lid|key|nameplate|drum|tine N      a pinch on that part (tine 0 = G4 .. 17 = C6; key N = the 2D key)          drag key|drum <cm>   (+ = down)
  *   spring <0..1> · song <id> · speed <0.5..1.5> · col N · pins "c.t;c.t" (t = 1..8) · windplay · stop · back · rest · undo
  *   hold <ms>|off (freeze the box N ms from now) · lang zh|en|system · page play|songs|settings · finish walnut|maple|red
  *   edit on|off (pin-edit keys on the Play page) · mute on|off · volume 0..2 · coach on|off · nearhint on|off · confirm clear|quit · yes · no · newsong · closepanel
@@ -103,9 +103,9 @@ class DebugCommandReceiver : BroadcastReceiver() {
                     "B4" -> { open(); ctl.act("goto B4") { it.windAndPlay(); it.freezeAt = it.t + MusicBox.REWIND_S + 8 * 60.0 / it.bpm / it.speed + 0.04 } }
                     "B4r" -> { open(); ctl.act("goto B4r") { it.debugSetPos(40); it.setSpringFraction(6.0 / 64) }; later(300) { hold(700) } }
                     "B5" -> { open(); later(600) { drag("drum", 3f) }; later(1100) { hold(0) } }
-                    "B6" -> { open(); Ui.editPins = true; ctl.act("goto B6") { b -> b.selectSong(b.mine.firstOrNull()?.id ?: b.newSong()!!.id) }; later(700) { tap("tine:4"); hold(60) } }
-                    "B6fork" -> { mine(0); open(); Ui.editPins = true; later(700) { ctl.act("goto fork") { it.debugSetPos(48) }; tap("tine:0"); hold(300) } }
-                    "B6full" -> { mine(6); open(); Ui.editPins = true; later(700) { ctl.act("goto full") { it.debugSetPos(48) }; tap("tine:0"); hold(300) } }
+                    "B6" -> { open(); Ui.editPins = true; ctl.act("goto B6") { b -> b.selectSong(b.mine.firstOrNull()?.id ?: b.newSong()!!.id) }; later(700) { tap("tine:12"); hold(60) } }
+                    "B6fork" -> { mine(0); open(); Ui.editPins = true; later(700) { ctl.act("goto fork") { it.debugSetPos(48) }; tap("tine:5"); hold(300) } }
+                    "B6full" -> { mine(6); open(); Ui.editPins = true; later(700) { ctl.act("goto full") { it.debugSetPos(48) }; tap("tine:5"); hold(300) } }
                     "B7" -> { ctl.act("goto B7") { it.setSpringFraction(5.0 / 8) } }
                     "B8" -> { open(); later(700) { ctl.act("goto B8") { it.selectSong("ode"); it.freezeAt = it.t + 0.1 } } }
                     "B9" -> { open(); ctl.act("goto B9") { it.debugSetPos(20) }; later(700) { ctl.act("goto B9b") { it.windAndPlay(); it.freezeAt = it.t + 0.15 } } }
@@ -133,6 +133,8 @@ class DebugCommandReceiver : BroadcastReceiver() {
                 graph.preview.toggle(s)
             }
             "tap" -> tap(if (f.firstOrNull() == "tine") "tine:${f.getOrNull(1)}" else a)
+            // the 2D pin keyboard's own path (v0.1.3): key N = the key under tine N (0 = G4 .. 17 = C6)
+            "key" -> a.toIntOrNull()?.let { r -> ctl.act("key $r") { it.tapTine(r) }; ctl.coachCheck() }
             "drag" -> { val part = f.getOrNull(0) ?: "key"; val cm = f.getOrNull(1)?.toFloatOrNull() ?: 3f; drag(part, cm); later(12 * 30 + 200L) { dragEnd(part) } }
             "spring" -> ctl.act("spring") { it.setSpringFraction(a.toDoubleOrNull() ?: 0.0) }
             "song" -> ctl.act("song") { it.selectSong(a) }

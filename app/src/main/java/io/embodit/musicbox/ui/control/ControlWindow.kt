@@ -60,6 +60,7 @@ import com.pico.spatial.ui.platform.containers.LocalSpatialNavigator
 import io.embodit.musicbox.BuildConfig
 import io.embodit.musicbox.R
 import io.embodit.musicbox.domain.BoxState
+import io.embodit.musicbox.domain.Comb
 import io.embodit.musicbox.domain.Drum
 import io.embodit.musicbox.domain.Finish
 import io.embodit.musicbox.domain.Language
@@ -82,7 +83,7 @@ import java.util.Locale
 import kotlin.system.exitProcess
 
 /**
- * The control window (Planar WindowContainer beside the box, 560 x 600 dp): all 2D UI, three pages switched by the
+ * The control window (Planar WindowContainer beside the box, 640 x 600 dp): all 2D UI, three pages switched by the
  * native SpatialUI TabBar (D8): Play / Tunes / Settings. Only the classics list scrolls (v0.1.2, 17 tunes in groups);
  * every other page fits (D44) and spreads its rows between the header and the last row, so the blank outside the content is only the window padding. Confirmations unfold in place (P4).
  */
@@ -180,7 +181,7 @@ private fun LoadingPage(settings: Settings, graph: Graph) {
 /**
  * B31: at most 7 tappable controls per screen (tabs count, mute / quit do not). Play view: 3 tabs + [上弦并播放 / 停] +
  * speed slider + [钉谱…] = 6. Edit view ([钉谱…] unfolds it in place, a focused mode like P4: the TabBar steps aside):
- * ◂ / ▸ / 撤销 / 清空… / [钉好了] = 5.
+ * ◂ / ▸ / 撤销 / 清空… / [钉好了] = 5 + the pin keyboard (18 keys, one instrument: the comb itself, ui-audit B31 note).
  */
 @Composable
 private fun PlayPage(ui: BoxUi, settings: Settings, graph: Graph) {
@@ -241,7 +242,10 @@ private fun PlayKeys(ui: BoxUi, settings: Settings, graph: Graph, playing: Boole
     }
 }
 
-/** The pin-edit keys (◂ back / rest ▸ / undo / clear…) + [钉好了]; grey with the reason when the lid is shut or it is playing (D43). */
+/**
+ * The pin-edit view: the 18-key pin keyboard (v0.1.3, same action as tapping that tine), ◂ back / rest ▸ / undo / clear…
+ * in one row, and [钉好了]; grey with the reason when the lid is shut or it is playing (D43).
+ */
 @Composable
 private fun EditKeys(ui: BoxUi, graph: Graph) {
     val song = ui.song
@@ -249,11 +253,10 @@ private fun EditKeys(ui: BoxUi, graph: Graph) {
     val caption = if (block != null) stringResource(lineRes(block)) else stringResource(R.string.edit_caption, song?.pins?.size ?: 0, ui.col + 1, song?.length ?: 16)
     Txt(caption, "edit/caption", style = PicoTheme.typography.bodyMedium, color = if (block != null) MBColors.Ink else MBColors.InkSecondary,
         align = TextAlign.Center, maxLines = 2, modifier = Modifier.fillMaxWidth())
+    PinKeyboard(isZh(), enabled = ui.canEdit, onKey = { r -> graph.box.act("key $r") { it.tapTine(r) }; graph.box.coachCheck() })
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         SecondaryButton(stringResource(R.string.btn_back), "edit/back", onClick = { graph.box.act("btn back") { it.back() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
         SecondaryButton(stringResource(R.string.btn_rest), "edit/rest", onClick = { graph.box.act("btn rest") { it.rest() } }, enabled = ui.canEdit, modifier = Modifier.weight(1f))
-    }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         SecondaryButton(stringResource(R.string.btn_undo), "edit/undo", icon = R.drawable.ic_undo, onClick = { graph.box.act("btn undo") { it.undo() } }, enabled = ui.canUndo, modifier = Modifier.weight(1f))
         SecondaryButton(stringResource(R.string.btn_clear_pins), "edit/clear", icon = R.drawable.ic_clear, onClick = { Ui.confirm = Confirm.Clear; Log.i(TAG, "CONFIRM clear P4") },
             enabled = ui.canEdit && (song?.pins?.isNotEmpty() == true), modifier = Modifier.weight(1f))
@@ -390,7 +393,7 @@ private fun ClassicRow(s: Song, zh: Boolean, current: Boolean, previewing: Boole
 }
 
 /**
- * The tune on the drum, on the Tunes page: name + pins, a small roll (8 tine rows x its columns, pins in the tine colours,
+ * The tune on the drum, on the Tunes page: name + pins, a small roll (18 tine rows x its columns, pins in the tine colours,
  * the pluck column marked) and [改这首] (a classic: the first pin saves a copy here) / [钉谱…] (opens the edit keys on Play).
  * With no tunes of your own a line on top says how this list fills. Short space (4–5 tunes) -> one row: name + the key.
  */
@@ -431,7 +434,10 @@ private fun OnDrumCard(ui: BoxUi, zh: Boolean, graph: Graph, modifier: Modifier)
     }
 }
 
-/** A read-only roll: 8 rows (tine 1 at the bottom, like the comb labels low -> high), one cell per column of the tune. */
+/**
+ * A read-only roll: 18 rows (G4 at the bottom, like the comb low -> high; v0.1.3), one cell per column of the tune. Sharp
+ * rows are shaded like black keys; the C5 and C6 rows get a stronger line so the octave reads at a glance.
+ */
 @Composable
 private fun MiniRoll(song: Song, col: Int, modifier: Modifier) {
     val cols = song.length.coerceAtLeast(16)
@@ -443,7 +449,11 @@ private fun MiniRoll(song: Song, col: Int, modifier: Modifier) {
             val strong = c % 4 == 0
             drawLine(if (strong) MBColors.RollLineStrong else MBColors.RollLine, Offset(c * cw, 0f), Offset(c * cw, size.height), strokeWidth = if (strong) 2f else 1f)
         }
-        for (r in 0..Drum.TINES) drawLine(MBColors.RollLine, Offset(0f, r * rh), Offset(size.width, r * rh), strokeWidth = 1f)
+        for (r in 0 until Drum.TINES) if (Comb.sharp(r)) drawRect(MBColors.RollLine.copy(alpha = 0.55f), topLeft = Offset(0f, size.height - (r + 1) * rh), size = Size(size.width, rh))
+        for (r in 0..Drum.TINES) {
+            val octave = r == 5 || r == 17   // the bottom edges of the C5 and C6 rows
+            drawLine(if (octave) MBColors.RollLineStrong else MBColors.RollLine, Offset(0f, size.height - r * rh), Offset(size.width, size.height - r * rh), strokeWidth = if (octave) 2f else 1f)
+        }
         if (col in 0 until cols) drawRect(MBColors.Amber.copy(alpha = 0.35f), topLeft = Offset(col * cw, 0f), size = Size(cw, size.height))
         val rad = minOf(cw, rh) * 0.36f
         for (p in pins) {

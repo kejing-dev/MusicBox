@@ -73,7 +73,7 @@
     <!-- how to (B19: one line per main action, gesture + controller) -->
     <string name="how_to_title">How to play</string>
     <string name="how_to_lid">Open or close the lid: pinch the lid · or point and pull the trigger</string>
-    <string name="how_to_pin">Pin a note: pinch a tine · trigger on a tine. Tap a pinned one to pull it</string>
+    <string name="how_to_pin">Pin a note: tap its key under [Edit pins…] · or pinch / trigger a tine. Tap a pinned one to pull it</string>
     <string name="how_to_wind">Wind it: pinch the key once (+25%), or pinch and pull down · same with the trigger</string>
     <string name="how_to_scrub">Turn the drum by hand: pinch it and move up or down · hold the trigger and move</string>
     <string name="how_to_panel">Panel gone? Tap the brass plate on the front</string>
@@ -96,7 +96,7 @@
     <string name="btn_clear_pins">Clear…</string>
     <string name="card_on_drum">On the drum: %1$s</string>
     <string name="card_pins">%1$d pins · %2$d columns</string>
-    <string name="edit_caption">Tap a tine to pin · %1$d pins · column %2$d of %3$d</string>
+    <string name="edit_caption">Tap a key or a tine to pin · %1$d pins · column %2$d of %3$d</string>
     <string name="btn_listen">Listen</string>
     <string name="btn_listen_stop">Stop</string>
     <string name="group_kids">Kids</string>

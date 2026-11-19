@@ -40,7 +40,10 @@ object MBColors {
     val BrassDim = Color(0xFF5A4A2A)
     val Velvet = Color(0xFF5A1A2A)
     val CardInk = Color(0xFFF3E6C8)
-    val TINES = listOf(0xFFE5484D, 0xFFF2994A, 0xFFF2C94C, 0xFF6FCF97, 0xFF2DB3A6, 0xFF56A4F2, 0xFF8C7CF0, 0xFFE06CC1).map { Color(it) }
+    val TINES = io.embodit.musicbox.domain.Comb.COLOR.map { Color(it) }
+    val KeyWhite = Color(0xFFFBF6EC)
+    val KeyBlack = Color(0xFF2B2F35)
+    val OnKeyBlack = Color(0xFFFFFFFF)
 }
 
 /**

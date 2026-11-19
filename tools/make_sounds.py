@@ -2,9 +2,9 @@
 
   ~/.factory-venv/bin/python tools/make_sounds.py [~/Downloads/cc0-sounds]
 
-Tines (C major, one octave, C5..C6, equal temperament A4 = 440): single notes of a real music box recorded one by one
+Tines (v0.1.3: 18 tines G4..C6 chromatic, equal temperament A4 = 440; was 8 naturals C5..C6): single notes of a real music box recorded one by one
 by folkman (freesound pack 4540, CC0: D5 E5 F#5 G5 A5 B5 C#6 ...). Each tine takes the nearest recorded note and is
-re-pitched by resampling (at most 2 semitones, the usual sampler practice) to the exact target frequency, so the measured
+re-pitched by resampling (at most 2 semitones for C5 and up, the usual sampler practice; the bass G4..B4 3-7 down from D5) to the exact target frequency, so the measured
 fundamental is within 3 cents (printed). The recordings ring at 590-1100 Hz; the design's C4 octave would need 14
 semitones of shift (a slowed-tape sound), so the comb sits one octave up, where real cylinder music boxes play
 (deviation recorded in state.json).
@@ -39,7 +39,12 @@ FM = "freesound-music-box/folkman_%d.mp3"
 REC = {"D5": 70181, "E5": 70184, "F#5": 70173, "G5": 70174, "A5": 70175, "B5": 70177, "C#6": 70179, "D6": 70182}
 NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 # tine -> (target note, recorded source)
-TINES = [("C5", "D5"), ("D5", "D5"), ("E5", "E5"), ("F5", "E5"), ("G5", "G5"), ("A5", "A5"), ("B5", "B5"), ("C6", "C#6")]
+# v0.1.3: 18 tines G4..C6 chromatic. C5..C6 naturals keep their v0.1.2 source (same files, renumbered tine_6..tine_18);
+# the new sharps take the nearest recording within 1 semitone; the five bass tines G4..B4 come from the lowest recording
+# (D5) slowed 3..7 semitones, like a longer tine (the pack has nothing under D5; no synthesis, D51).
+TINES = [("G4", "D5"), ("G#4", "D5"), ("A4", "D5"), ("A#4", "D5"), ("B4", "D5"),
+         ("C5", "D5"), ("C#5", "D5"), ("D5", "D5"), ("D#5", "E5"), ("E5", "E5"), ("F5", "E5"), ("F#5", "F#5"),
+         ("G5", "G5"), ("G#5", "G5"), ("A5", "A5"), ("A#5", "A5"), ("B5", "B5"), ("C6", "C#6")]
 TINE_LEN = 2.6
 TINE_RMS = -18.8  # dBFS over 30-400 ms (the ring)
 TINE_PEAK = -3.0

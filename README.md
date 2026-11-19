@@ -11,10 +11,11 @@
 - **开盖**：盒盖内的曲名卡告诉你现在唱哪首，舞者从井口升起
 - **拧发条**：钥匙下 8 格余量，唱着唱着减少，最后渐慢停下；也可以按 [上弦并播放]
 - **拨滚筒**：用手前后转，一格一格出声
-- **钉谱**：点齿就在当前列钉一颗，播放中也能边听边钉；退一拍、空一拍、撤销 50 步
-- **曲子**：17 首公有领域曲，分 童谣 / 民歌 / 古典 / 节日 四组，每行可 [试听]；另有最多 6 首自己的，本机保存
+- **音梳**：18 根齿，G4–C6 半音齐全（v0.1.3 加宽），低音齿更长
+- **钉谱**：钉谱屏里有一排 18 键键盘（黑键是升号），点键或点齿就在当前列钉一颗，播放中也能边听边钉；退一拍、空一拍、撤销 50 步
+- **曲子**：26 首公有领域曲（含生日快乐、致爱丽丝、绿袖子、友谊地久天长、新年好、送别、平安夜、斯卡布罗集市、土耳其进行曲），分 童谣 / 民歌 / 古典 / 节日 四组，每行可 [试听]；另有最多 6 首自己的，本机保存
 - **木色**：胡桃木 / 枫木 / 红漆；快慢 50%–150%；静音常显
-- **声音**：真实八音盒单音的 CC0 录音，按 C 大调变调；节拍按真实时钟走，掉帧也不慢
+- **声音**：真实八音盒单音的 CC0 录音，逐齿调到十二平均律；节拍按真实时钟走，掉帧也不慢
 - 木盒在系统的立体窗口（Shared Space 体积）里，可拖动；控制窗用原生页签：播放 / 曲子 / 设置
 - 手势捏合 / 眼动 + 捏合 / 手柄射线；中英双语；全部本机运行，不联网、不需要账号
 
@@ -60,7 +61,7 @@ A wooden music box that sings on your desk, for PICO OS 6 Shared Space. Wind it 
 - **Wind**: 8 cells of spring under the key run down as it plays, then it slows and stops; or press [Wind & play]
 - **Drum**: turn it by hand, note by note
 - **Pin a tune**: tap a tine to pin the current column, even while it plays; back, rest, 50-step undo
-- **Tunes**: 17 public-domain tunes in four groups (Kids, Folk, Classical, Holiday), each with [Listen], plus up to six of your own, saved on device
+- **Tunes**: 26 public-domain tunes (now with Happy Birthday, Für Elise, Greensleeves, Auld Lang Syne, Silent Night, Scarborough Fair, Turkish March…) in four groups (Kids, Folk, Classical, Holiday), each with [Listen], plus up to six of your own, saved on device
 - **Finish**: walnut / maple / red lacquer; speed 50–150 %; mute always on screen
 - **Sound**: real CC0 recordings of a music box, tuned to C major; timing follows the real clock, so dropped frames don't slow the tune
 - The box lives in a system volume you can move; the control window uses the native TabBar: Play / Tunes / Settings

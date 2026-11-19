@@ -57,7 +57,7 @@ private fun qz(deg: Double) = Quat(Vector3(0f, 0f, 1f), rad(deg))
  *   ├ lidHinge (rotates about X) ├ lid_<finish> ├ card ├ "lid" holders (closed: whole lid; open: top edge 4 cm) └ lid glow
  *   ├ stage (lift + spin) └ dancer
  *   ├ "drum" holder (capsule along X) └ axis └ spin (rotates about X) ├ drum.glb └ 256 pins (pool)
- *   ├ "tine:r" x 8 └ pivot (bends about X at the root) └ tine.glb
+ *   ├ "tine:r" x 18 └ pivot (bends about X at the root) └ tine.glb
  *   ├ "key" holder └ pivot (rod axis, turns about X) └ key.glb ; key glow
  *   └ pluck-line glow, 16 notes, light
  * ```
@@ -185,8 +185,9 @@ internal class BoxScene(private val ctl: BoxCtl, private val scope: CoroutineSco
         for (t in 0 until Drum.TINES) {
             val cy = (Layout.TINE_HIT_Y0 + Layout.TINE_HIT_Y1) / 2; val cz = (Layout.TINE_HIT_Z0 + Layout.TINE_HIT_Z1) / 2
             val holder = Entity().apply { setName(BoxNames.tine(t)); place(this, Layout.tineX(t), cy, cz); content.addChild(this) }
-            val pivot = Entity().apply { setName("tinePivot:$t"); place(this, 0f, Layout.TINE_Y - cy, Layout.TINE_ROOT_Z - cz); holder.addChild(this) }
-            pivot.addChild(clone(m.tine).apply { setName("tineModel:$t") })
+            val pivot = Entity().apply { setName("tinePivot:$t"); place(this, 0f, Layout.TINE_Y - cy, Layout.tineRootZ(t) - cz); holder.addChild(this) }
+            // tine.glb is one 3.95 cm tine; the bass tines are longer (graded comb, v0.1.3), so each clone stretches along its length
+            pivot.addChild(clone(m.tine).apply { setName("tineModel:$t"); transform().setScaleVector(Vector3(1f, 1f, Layout.tineLen(t) / TINE_GLB_LEN)) })
             GazeTargets.install(holder, r.tineShape, r.physics)
             tinePivots += pivot
         }
@@ -386,6 +387,8 @@ internal class BoxScene(private val ctl: BoxCtl, private val scope: CoroutineSco
     companion object {
         /** Spatial SDK light is lux-scale (build.md 2026-11-12); 1500 matches wind-chime / zen-orb in Shared Space. */
         const val LIGHT_LUX = 1500f
+        /** tine.glb's length (tools/build_musicbox.py build_tine). */
+        const val TINE_GLB_LEN = 0.0395f
     }
 }
 

@@ -195,7 +195,7 @@ class BoxCtl(presets: List<Song>, private val store: SongStore, private val sett
 }
 
 /**
- * Real recordings through a SoundPool (design budget.audio: 8 tine voices + mechanical). D51 / B20: the same tine played
+ * Real recordings through a SoundPool (design budget.audio: 18 tine voices (v0.1.3) + mechanical). D51 / B20: the same tine played
  * again fades the old voice in 10 ms before the new one starts (a real tine is stopped by the next pin); different tines
  * never cut each other; every pluck plays at the same level (no "later sounds quieter" limiter: 10 plucks in a row peak
  * within 1 dB). Musical tines have no random pitch (tuning <= 3 cents); the ratchet clicks rotate 3 recordings +-3 %.
@@ -204,14 +204,14 @@ class SoundPlayer(context: Context) {
     @Volatile var muted = false
     @Volatile var gain = 1f
 
-    private val pool = SoundPool.Builder().setMaxStreams(16)
+    private val pool = SoundPool.Builder().setMaxStreams(24)
         .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
         .build()
-    private val tine = IntArray(8)
+    private val tine = IntArray(Drum.TINES)
     private val clicks = ArrayList<Int>()
     private val other = HashMap<Sfx.Kind, Int>()
     private val loaded = HashSet<Int>()
-    private val tineStream = IntArray(8)
+    private val tineStream = IntArray(Drum.TINES)
     private val main = Handler(Looper.getMainLooper())
     private val rnd = java.util.Random(7)
     @Volatile var lastPlayMs = 0L
@@ -221,7 +221,7 @@ class SoundPlayer(context: Context) {
         pool.setOnLoadCompleteListener { _, id, status -> if (status == 0) synchronized(loaded) { loaded += id } }
         fun load(name: String): Int = runCatching { context.assets.openFd("sounds/$name.wav").use { pool.load(it, 1) } }
             .onFailure { Log.w(TAG, "no sound $name") }.getOrDefault(0)
-        for (i in 0 until 8) tine[i] = load("tine_${i + 1}")
+        for (i in 0 until Drum.TINES) tine[i] = load("tine_${i + 1}")
         listOf("click", "click_2", "click_3").forEach { clicks += load(it) }
         other[Sfx.Kind.LID_OPEN] = load("lid_open")
         other[Sfx.Kind.LID_CLOSE] = load("lid_close")
@@ -236,7 +236,7 @@ class SoundPlayer(context: Context) {
         val g = gain
         when (s.kind) {
             Sfx.Kind.TINE -> {
-                val r = s.tine.coerceIn(0, 7)
+                val r = s.tine.coerceIn(0, Drum.TINES - 1)
                 val id = tine[r]
                 if (!ok(id)) return
                 val old = tineStream[r]

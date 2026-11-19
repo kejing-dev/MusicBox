@@ -11,6 +11,8 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.util.Log
 import androidx.core.graphics.PathParser
+import io.embodit.musicbox.domain.Comb
+import io.embodit.musicbox.domain.Drum
 import io.embodit.musicbox.domain.Layout
 import io.embodit.musicbox.platform.TAG
 
@@ -27,7 +29,7 @@ object BoxTextures {
     val BRASS = Color.rgb(0xC9, 0xA2, 0x5A)
     val BRASS_DARK = Color.rgb(0x6B, 0x52, 0x22)
     val ENGRAVE = Color.rgb(0x3A, 0x2A, 0x10)
-    val TINE_COLORS = intArrayOf(0xFFE5484D.toInt(), 0xFFF2994A.toInt(), 0xFFF2C94C.toInt(), 0xFF6FCF97.toInt(), 0xFF2DB3A6.toInt(), 0xFF56A4F2.toInt(), 0xFF8C7CF0.toInt(), 0xFFE06CC1.toInt())
+    val TINE_COLORS: IntArray = io.embodit.musicbox.domain.Comb.COLOR
 
     /** Card line widths, px at the card's sizes (title 1.8 cm, hint 1.4 cm on a 0.30 m / 2048 px card). */
     const val CARD_TEXT_PX = 1920f
@@ -88,24 +90,44 @@ object BoxTextures {
         return bmp
     }
 
-    /** Comb labels: under each tine a colour dot + number + sol-fa ("1 do") or letter ("1 C"). 2048 x 102 px for 0.20 x 0.01 m. */
+    /**
+     * Comb labels (v0.1.3, 18 tines G4..C6): one 113 px cell per tine. Naturals: a colour bar + the note in cream on the
+     * walnut strip; sharps: a slate "black key" cell with white text. Chinese: numbered notation (do = C5, a dot below
+     * for the low octave, above for high C, "#" for sharps); English: note names ("G4", "C#5"). 2048 x 102 px for 0.20 x 0.01 m.
+     */
     fun labels(zh: Boolean): Bitmap {
         val w = 2048; val h = 102
         if (testF) return orientation(w, h)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         c.drawColor(Color.rgb(0x2A, 0x1E, 0x16))
-        val names = if (zh) listOf("1 do", "2 re", "3 mi", "4 fa", "5 sol", "6 la", "7 si", "8 do'") else listOf("1 C", "2 D", "3 E", "4 F", "5 G", "6 A", "7 B", "8 C")
-        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = CARD_INK; textSize = 70f; typeface = Typeface.DEFAULT_BOLD; textAlign = Paint.Align.LEFT }
-        val dot = Paint(Paint.ANTI_ALIAS_FLAG)
-        for (r in 0 until 8) {
-            // tine r centre x = 0.055 + (r - 3.5) * 0.025 m; the strip spans x -0.045..+0.155
+        val cell = w / Drum.TINES.toFloat()
+        val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.DEFAULT_BOLD; textAlign = Paint.Align.CENTER }
+        val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+        for (r in 0 until Drum.TINES) {
+            // tine r centre x = Layout.tineX(r); the strip spans x -0.045..+0.155
             val cx = ((Layout.tineX(r) - (Layout.LABELS.x - Layout.LABELS_W / 2)) / Layout.LABELS_W) * w
-            val tw = p.measureText(names[r])
-            val start = cx - (tw + 46f) / 2
-            dot.color = TINE_COLORS[r]
-            c.drawCircle(start + 16f, h / 2f, 16f, dot)
-            c.drawText(names[r], start + 46f, h / 2f + 25f, p)
+            val sharp = Comb.sharp(r)
+            if (sharp) {
+                fill.color = Color.rgb(0x2B, 0x2F, 0x35)
+                c.drawRoundRect(RectF(cx - cell / 2 + 5, 4f, cx + cell / 2 - 5, h - 4f), 12f, 12f, fill)
+            }
+            fill.color = TINE_COLORS[r]
+            c.drawRoundRect(RectF(cx - 30f, 8f, cx + 30f, 20f), 6f, 6f, fill)
+            txt.color = if (sharp) Color.WHITE else CARD_INK
+            if (zh) {
+                val (deg, oct) = Comb.jianpu(r)
+                txt.textSize = if (deg.length > 1) 50f else 58f
+                c.drawText(deg, cx, 72f, txt)
+                fill.color = txt.color
+                val dx = if (deg.length > 1) 12f else 0f
+                if (oct < 0) c.drawCircle(cx + dx, 88f, 6f, fill)
+                if (oct > 0) c.drawCircle(cx + dx, 28f, 6f, fill)
+            } else {
+                val n = Comb.name(r)
+                txt.textSize = if (n.length > 2) 40f else 48f
+                c.drawText(n, cx, 74f, txt)
+            }
         }
         return bmp
     }

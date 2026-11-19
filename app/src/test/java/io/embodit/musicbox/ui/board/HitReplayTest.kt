@@ -2,6 +2,7 @@ package io.embodit.musicbox.ui.board
 
 import io.embodit.musicbox.domain.Lines
 import io.embodit.musicbox.ui.board.input.parseLoggedPath
+import io.embodit.musicbox.domain.Drum
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,7 +12,7 @@ import java.io.File
 class HitReplayTest {
     @Test fun everyHolderResolves() {
         assertEquals("lid", BoxTargets.resolvePath(listOf("lidModel:WALNUT", "lidHinge", "content", "root")).let { null } ?: BoxTargets.resolvePath(listOf("lid", "lidHinge")))
-        for (r in 0 until 8) {
+        for (r in 0 until Drum.TINES) {
             assertEquals("tine:$r", BoxTargets.resolvePath(parseLoggedPath("tineModel:$r < tinePivot:$r < tine:$r < content < root")))
             assertEquals(BoxNames.Tine(r), BoxNames.hitOf(BoxTargets.resolvePath(listOf("node_0", "tineModel:$r", "tinePivot:$r", "tine:$r"))))
         }
@@ -22,7 +23,7 @@ class HitReplayTest {
         assertEquals(null, BoxTargets.resolvePath(listOf("box:WALNUT", "content", "root")))
         assertEquals(null, BoxTargets.resolvePath(listOf("dancer", "stage", "content")))
         assertEquals(null, BoxTargets.resolvePath(listOf("note:3", "content")))
-        assertEquals(BoxNames.None, BoxNames.hitOf("tine:8"))
+        assertEquals(BoxNames.None, BoxNames.hitOf("tine:18"))
     }
 
     /** D38 / D26: every line key has a string in both languages; how_to strings exist in both. */

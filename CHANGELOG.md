@@ -1,5 +1,18 @@
 # Changelog / 更新记录
 
+## v0.1.3 · 2026-11-18
+
+- 音梳从 8 齿加宽到 18 齿：G4–C6 半音齐全，真实比例（齿距 10.8 mm，低音齿 5.2 cm 到高音 3.2 cm，底座斜切）；原来 8 根齿的声音逐字节不变
+- 钉谱屏加一排 18 键键盘：11 个白键、7 个黑键（升号，深色）分两行不重叠，每个键 ≥ 48 dp；点键和点那根齿一样；控制窗加宽到 640 dp
+- 补回 9 首公版曲：生日快乐、致爱丽丝（主题，e 小调）、绿袖子、友谊地久天长、新年好、送别、平安夜（G 大调，省一次重复）、斯卡布罗集市、土耳其进行曲（开头主题），共 26 首；两只老虎末句低音 sol 回到原八度
+- 齿号标签：中文简谱（低音点在下），英文音名；卷谱 18 行，升号行像黑键一样加深
+- 旧版本存的「我的曲子」按原音高读进来，不会变调
+- The comb widens from 8 to 18 tines: G4–C6 with every semitone, real proportions (10.8 mm pitch, bass tines longer, slanted base); the old eight tines sound byte-identical
+- The edit view gets an 18-key keyboard: 11 white and 7 black (sharp) keys in two rows, every key ≥ 48 dp; a key does what tapping that tine does; the control window is 640 dp wide
+- Nine public-domain tunes are back: Happy Birthday, Für Elise (theme, in E minor), Greensleeves, Auld Lang Syne, Happy New Year, Farewell (Ordway), Silent Night (in G, one repeat out), Scarborough Fair, Turkish March (opening theme): 26 in all; Frère Jacques gets its low sol back
+- Comb labels: numbered notation in Chinese, note names in English; the roll has 18 rows with the sharps shaded
+- My tunes saved by older versions load at the same pitch
+
 ## v0.1.2 · 2026-11-18
 
 - 经典曲从 6 首加到 17 首，全部公有领域，每首写明来源：童谣（小星星、玛丽有只小羊羔、小蜜蜂、伦敦桥、划船歌、两只老虎、王老先生有块地）、民歌（茉莉花、噢！苏珊娜、圣者进行曲）、古典（欢乐颂、卡农、勃拉姆斯摇篮曲、格里格《晨景》、德沃夏克《念故乡》）、节日（铃儿响叮当、普世欢腾）

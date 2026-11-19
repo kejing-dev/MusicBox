@@ -1,7 +1,7 @@
 # 八音盒 Music Box: project guidance
 
-Package `io.embodit.musicbox`, v0.1.2, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
-`apps/music-box/design-package.json` (gate B passed 2026-11-05, default options: scale k = 1.28, 8 tines, no import,
+Package `io.embodit.musicbox`, v0.1.3, PICO OS 6 Shared Space, Spatial SDK BOM 6.1.9. Design contract: spatial-app-factory
+`apps/music-box/design-package.json` (gate B passed 2026-11-05, default options: scale k = 1.28, 18 tines G4..C6 since v0.1.3 (was 8), no import,
 dancer B, lid closed at start). Skeleton from the factory's klotski-box project (CloudAir lineage: two containers, theme,
 board-input template, debug receiver); everything music-box is new.
 
@@ -27,7 +27,7 @@ board-input template, debug receiver); everything music-box is new.
 | `ui/control/*` | the window pages; every Text logs `OVERFLOW <tag>` when cut |
 | `tools/` | asset builders (see README), `mb.sh` harness, `loudness.py`, `contrast.py`, `blank.py` |
 
-Holders (board-input): `lid` (closed: whole lid; open: top 4 cm), `tine:0..7`, `drum` (capsule, drag only), `key`
+Holders (board-input): `lid` (closed: whole lid; open: top 4 cm), `tine:0..17` (0 = G4, 5 = C5, 17 = C6), `drum` (capsule, drag only), `key`
 (tap = +25 %, drag down = wind), `nameplate` (reopens the panel). Box body, dancer, notes, card, gauge take no hits.
 
 ## Build / test (kj-mbp-m5)
@@ -58,7 +58,7 @@ or `hold off`.
 | 钉谱 edit view | `goto EDIT` (lid open) · `goto EDITclosed` (keys grey, "先开盖") · `edit on|off` | TabBar hidden |
 | B7 合着有弦 | `goto B7` | 5 cells lit |
 | B8 换曲 / B9 倒回 | `goto B8` · `goto B9` | frozen mid-animation |
-| P2 曲子 (classics) | `goto P2` (first screen) · `goto P2end` (scrolled to the end) · `scroll top` / `end` / `kids` / `folk` / `classic` / `holiday` / `<n>` · `listen <id>` / `listen off` (the row's [试听] path) | v0.1.2: 17 tunes, 4 groups, one LazyColumn |
+| P2 曲子 (classics) | `goto P2` (first screen) · `goto P2end` (scrolled to the end) · `scroll top` / `end` / `kids` / `folk` / `classic` / `holiday` / `<n>` · `listen <id>` / `listen off` (the row's [试听] path) | v0.1.3: 26 tunes, 4 groups (7 / 7 / 7 / 5), one LazyColumn |
 | P2 曲子 (mine) | `goto P2mine` (0 tunes) · `goto P2mine1..5` · `goto P2full` (6 tunes) | 我的: on-drum card + roll |
 | P3 设置 / 怎么操作 | `goto P3` · `goto HOW` | |
 | P4 确认 | `goto P4clear` · `goto P4delete` · `goto P4quit` · `yes` / `no` | |
@@ -67,14 +67,18 @@ Other: `tap lid|key|nameplate|drum|tine N`, `drag key|drum <cm>`, `spring 0..1`,
 `pins "c.t;…"`, `windplay`, `stop`, `back`, `rest`, `undo`, `lang zh|en|system`, `page`, `mute`, `volume 0..2`,
 `orient on|off` (F↑ test textures, D10), `replay "<holder>"`, `dump`.
 
-## Tunes (v0.1.2)
-`tools/songs.py` writes `app/src/main/assets/songs.txt` (17 classics, line format in the script; field 11 = group
-kids / folk / classic / holiday). The comb is 8 natural tines C5..C6, so only tunes inside one octave with no sharps fit
-(C major; F major or A minor when they avoid the missing note); the script header lists what was left out and why.
+## Comb + tunes (v0.1.3)
+The comb is 18 tines, G4..C6 with every semitone (`Drum.TINES`, `Comb` in `domain/Song.kt`: names, numbered notation,
+colours; `Layout.tineX / tineLen / tineRootZ`). `tools/songs.py` writes `app/src/main/assets/songs.txt` (26 classics,
+first line `#comb 18 G4-C6`, tines 1..18; field 11 = group kids / folk / classic / holiday). A file without that header
+(my tunes saved by v0.1.0–v0.1.2, tines 1..8 = C5..C6) is read through `Drum.FROM_V1`, so nothing changes pitch.
+The edit view has the 18-key pin keyboard (`ui/control/Keyboard.kt`, two rows, white >= 50 x 64 dp, black 48 x 52 dp):
+a key calls the same `tapTine(r)` as a 3D tine; debug `key N` takes that path, `tap tine N` the 3D one.
+Sounds: `tools/make_sounds.py` (18 tines, the old 8 byte-identical; G4..B4 = the D5 recording slowed 3-7 semitones).
 `SongsTest` checks each tune's pin count, group, source line, range / grid and its opening as note names.
 `[试听]` = `platform/Preview` (own URGENT_AUDIO handler thread, same SoundPool voices, `PreviewPlan.of`: first 8 s);
 it stops on a second tap, another row, leaving the Tunes page, the drum plucking, background or exit.
-Offline renders + pop / cut scan: `~/.factory-venv/bin/python tools/render.py OUT v0.1.2` then
+Offline renders + pop / cut scan: `~/.factory-venv/bin/python tools/render.py OUT v0.1.3` then
 `~/.factory-venv/bin/python -I tools/clickscan.py <v0.1.1 songs dir> OUT/songs`.
 
 ## Known

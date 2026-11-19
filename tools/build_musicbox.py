@@ -11,8 +11,9 @@ scales the content root by k = 1.28 and by the measured volume size):
   stage.glb          dancer lift: 8 cm velvet disc with a brass rim + rod; origin = stage top centre
   drum.glb           brass drum r 4.5 cm x 20 cm, end flanges, axle; origin = drum axis centre; 48 segments
   pin.glb            steel pin r 0.9 mm x 3 mm + round cap, 10 segments (DV8); origin = foot, along +Y
-  tine.glb           one steel tine 1.6 cm wide, 2 mm thick, 3.95 cm long; origin = root top centre, extends to -Z
-  combbase.glb       the steel comb base block (tines are separate entities)
+  tine.glb           one steel tine 9.5 -> 8 mm wide, 2 mm thick, 3.95 cm long; origin = root top centre, extends to -Z
+                     (v0.1.3: 18 tines at 10.8 mm pitch; the app stretches each clone to its graded length, Layout.tineLen)
+  combbase.glb       the steel comb base block with a slanted back edge (bass tines longer); tines are separate entities
   key.glb            winding key: rod + boss + butterfly wings; origin = rod root, rod along +X; 32 segments
 Finishes: walnut / maple / red (lacquer). All materials OPAQUE except glass (profile D24 / B12).
 Texture convention: image up = +Y (or -Z on horizontal faces), image right = +X.
@@ -489,7 +490,7 @@ def build_pin():
 def build_tine():
     m = Mesh()
     L, t = 0.0395, 0.002
-    w0, w1 = 0.016, 0.013
+    w0, w1 = 0.0095, 0.0080
     # tapered plate from root (z = 0) to the tip (z = -L), top at y = 0
     pts = [(-w0 / 2, 0), (w0 / 2, 0), (w1 / 2, -L), (-w1 / 2, -L)]
     top = [(p[0], 0.0, p[1]) for p in pts]
@@ -506,9 +507,29 @@ def build_tine():
     m.write("tine", [mat("steel", STEEL, rough=0.22, metal=1.0)])
 
 
+# comb (v0.1.3, Layout.kt): 18 tines G4..C6, pitch 10.8 mm centred at x 0.052, free length 5.2 cm (G4) -> 3.2 cm (C6), tips on z = 0.0155
+TINE_TIP_Z, TINE_PITCH, COMB_X = 0.0155, 0.0108, 0.052
+def tine_x(r): return COMB_X + (r - 8.5) * TINE_PITCH
+def tine_root_z(r): return TINE_TIP_Z + 0.052 + (0.032 - 0.052) * r / 17
+
+
 def build_combbase():
     m = Mesh()
-    cuboid(m, 0, -0.045, 0.155, -0.121, -0.095, 0.055, 0.09, "xXYzZ")
+    x0, x1, y0, y1, zf = -0.045, 0.155, -0.121, -0.095, 0.09
+    # back edge: the straight line through the tine roots, extended to the block ends
+    slope = (tine_root_z(17) - tine_root_z(0)) / (tine_x(17) - tine_x(0))
+    zb0 = tine_root_z(0) + slope * (x0 - tine_x(0))
+    zb1 = tine_root_z(0) + slope * (x1 - tine_x(0))
+    top = [(x0, y1, zb0), (x1, y1, zb1), (x1, y1, zf), (x0, y1, zf)]
+    bot = [(x, y0, z) for x, _, z in top]
+    m.quad(0, top[3], top[2], top[1], top[0], (0, 1, 0))          # top (+Y)
+    m.quad(0, bot[3], bot[0], bot[1], bot[2], (0, -1, 0))         # bottom
+    m.quad(0, bot[3], bot[2], top[2], top[3], (0, 0, 1))          # front (+Z)
+    m.quad(0, bot[0], bot[3], top[3], top[0], (-1, 0, 0))         # left
+    m.quad(0, bot[2], bot[1], top[1], top[2], (1, 0, 0))          # right
+    dx, dz = x1 - x0, zb1 - zb0
+    ln = math.hypot(dx, dz)
+    m.quad(0, bot[1], bot[0], top[0], top[1], (dz / ln, 0, -dx / ln))  # slanted back edge (faces the drum)
     # four screw heads on top
     for x in (-0.035, 0.025, 0.085, 0.145):
         cylinder_y(m, 1, -0.095, -0.0935, 0.003, x, 0.08, seg=24)

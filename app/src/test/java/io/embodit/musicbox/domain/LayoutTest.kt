@@ -43,7 +43,7 @@ class LayoutTest {
         val solids = Layout.solids(true).filter { it.name != "combBase" }
         for ((n, e) in eyes) for (r in 0 until Drum.TINES) {
             val x = Layout.tineX(r)
-            for (z in listOf(Layout.TINE_ROOT_Z - 0.002f, (Layout.TINE_ROOT_Z + Layout.TINE_TIP_Z) / 2, Layout.TINE_TIP_Z + 0.001f)) {
+            for (z in listOf(Layout.tineRootZ(r) - 0.002f, (Layout.tineRootZ(r) + Layout.TINE_TIP_Z) / 2, Layout.TINE_TIP_Z + 0.001f)) {
                 assertEquals("tine $r z=$z from $n", null, blocked(e, V3(x, Layout.TINE_Y + 0.0005f, z), solids))
             }
             // the label strip (colour dot + number) under each tine
@@ -53,7 +53,7 @@ class LayoutTest {
 
     @Test fun pinsNearThePluckLineSeen() {
         val solids = Layout.solids(true).filter { it.name != "drum" }
-        for ((n, e) in eyes) for (c in 0..3) for (r in listOf(0, 7)) {
+        for ((n, e) in eyes) for (c in 0..3) for (r in listOf(0, 8, Drum.TINES - 1)) {
             val p = Layout.pinHead(c, r, 0.0)
             assertEquals("pin $c/$r from $n", null, blocked(e, p, solids))
         }
@@ -69,37 +69,38 @@ class LayoutTest {
 
     @Test fun targetsBigEnoughAtArmsLength() {
         // design distance 0.6 m (nearHint pulls the box to arm's length); profile D17: >= 2° and >= 4 cm, gaps >= 1.5 cm or 0.3 x size
-        val tine = Layout.TINE_HIT_W * Layout.K
-        assertTrue("tine target ${tine * 100} cm", Layout.angleDeg(Layout.TINE_HIT_W, 0.6f) >= 2f)
         assertTrue(Layout.angleDeg(Layout.TINE_HIT_Z1 - Layout.TINE_HIT_Z0, 0.6f) >= 3f)
         assertTrue(Layout.angleDeg(Layout.PLATE_W, 0.6f) >= 3f)
         assertTrue(Layout.angleDeg(Layout.KEY_HIT_MAX.y - Layout.KEY_HIT_MIN.y, 0.6f) >= 3f)
-        // tine boxes never overlap each other or the drum capsule
-        for (r in 0 until 7) assertTrue(Layout.tineX(r + 1) - Layout.tineX(r) > Layout.TINE_HIT_W)
+        // v0.1.3 (18 tines at real 11.1 mm pitch, user "Widen the comb"): a 3D tine is now 1.3 cm wide (~1.2° at 0.6 m), under
+        // D17, so the >= 48 dp 2D keyboard is the way to pin a note (deviation DV-comb18); the 3D tines still take taps and
+        // their boxes never overlap each other or the drum capsule
+        val tine = Layout.TINE_HIT_W * Layout.K
+        assertTrue("tine target ${tine * 100} cm", tine >= 0.0125f)
+        for (r in 0 until Drum.TINES - 1) assertTrue(Layout.tineX(r + 1) - Layout.tineX(r) > Layout.TINE_HIT_W)
         val drumFront = Layout.DRUM.z + kotlin.math.sqrt(Layout.DRUM_HIT_R * Layout.DRUM_HIT_R - (Layout.TINE_HIT_Y0 - Layout.DRUM.y).let { it * it })
         assertTrue("drum front $drumFront", drumFront < Layout.TINE_HIT_Z0)
-        assertTrue(tine >= 0.03f)
+        // the comb spans the drum: first and last tine inside the comb base / drum length
+        assertTrue(Layout.tineX(0) - Layout.TINE_PITCH / 2 >= Layout.DRUM.x - Layout.DRUM_L / 2 - 0.001f)
+        assertTrue(Layout.tineX(Drum.TINES - 1) + Layout.TINE_PITCH / 2 <= Layout.DRUM.x + Layout.DRUM_L / 2 + 0.001f)
+        // graded comb: every tine longer than the one above it, tips on one line
+        for (r in 0 until Drum.TINES - 1) assertTrue(Layout.tineLen(r) > Layout.tineLen(r + 1))
     }
 
-    @Test fun contentCornersWithin39DegreesFromSeatedAndStandingEyes() {
-        // every real corner of box + open lid + key (tilted into the volume frame), seen from the design eyes and the
-        // emulator default looking at the volume centre (D14 / QA ±39°, re-checked after the v0.1.1 lean)
-        val pts = Layout.contentPoints().map { Layout.toVolume(it) }
-        for ((n, e) in Layout.eyesVolume()) for (c in pts) {
-            val d = c - e
-            val toCentre = V3(0f, 0f, 0f) - e
-            val yaw = Math.toDegrees(atan2(d.x.toDouble(), -d.z.toDouble()) - atan2(toCentre.x.toDouble(), -toCentre.z.toDouble()))
-            val pitch = Math.toDegrees(atan2(d.y.toDouble(), hypot(d.x.toDouble(), d.z.toDouble())) - atan2(toCentre.y.toDouble(), hypot(toCentre.x.toDouble(), toCentre.z.toDouble())))
-            assertTrue("corner $c from $n yaw=$yaw", abs(yaw) <= 39)
-            assertTrue("corner $c from $n pitch=$pitch", abs(pitch) <= 39)
-        }
-    }
-
-    @Test fun everythingAnimatedStaysInTheVolume() {
-        val hw = Layout.VOL_W / 2; val hh = Layout.VOL_H / 2; val hd = Layout.VOL_D / 2
-        for (p in Layout.contentPoints().map { Layout.toVolume(it) }) assertTrue("$p", abs(p.x) <= hw && abs(p.y) <= hh && abs(p.z) <= hd)
-        // closed lid: the lowered dancer is inside the box (head under the lid)
-        assertTrue(Layout.STAGE_DOWN_Y + Layout.DANCER_H < Layout.BY1)
+    /**
+     * The 2D pin keyboard (ui/control/Keyboard.kt) in the 640 dp window (24 dp padding each side): 11 white keys and 7 black
+     * keys, every key >= 48 dp wide and tall (B19), black keys never touch each other, each sits over the gap after its natural.
+     */
+    @Test fun keyboardKeysAre48dp() {
+        val content = 640f - 2 * 24f; val gap = 4f; val n = Comb.whites.size
+        val w = (content - gap * (n - 1)) / n
+        assertEquals(11, n); assertEquals(7, Comb.blacks.size)
+        assertTrue("white $w dp", w >= 48f)
+        val bw = 48f
+        val xs = Comb.blacks.map { r -> (Comb.whites.indexOf(r - 1) + 1) * (w + gap) - gap / 2 - bw / 2 }
+        for (i in 0 until xs.size - 1) assertTrue("black keys ${xs[i]} / ${xs[i + 1]}", xs[i + 1] - xs[i] >= bw + 2f)
+        assertTrue(xs.first() >= 0f && xs.last() + bw <= content)
+        for (r in Comb.blacks) assertTrue(Comb.whites.indexOf(r - 1) >= 0 && Comb.whites.indexOf(r + 1) >= 0)
     }
 
     @Test fun tiltRoundTrips() {

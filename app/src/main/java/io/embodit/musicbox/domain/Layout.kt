@@ -75,14 +75,23 @@ object Layout {
     /** The pluck line: angle above +Z toward +Y of the tine tips seen from the drum axis (~40.2°). */
     val PLUCK_DEG: Float = Math.toDegrees(atan2(0.030, 0.0355)).toFloat()
 
-    // comb
+    // comb (v0.1.3: 18 tines G4..C6 along the same 20 cm drum, real proportions: 10.8 mm pitch, the bass tines longer)
     const val TINE_Y = -0.095f
-    const val TINE_ROOT_Z = 0.055f
+    /** The tips stay on the pluck line; the roots follow the comb base's slanted back edge. */
     const val TINE_TIP_Z = 0.0155f
-    const val TINE_PITCH = 0.025f
-    fun tineX(r: Int): Float = 0.055f + (r - 3.5f) * TINE_PITCH
-    /** Tine click boxes (design R3-02: full pitch minus a 1 mm gap). */
-    const val TINE_HIT_W = 0.024f
+    /** 10.8 mm pitch, centred 3 mm left of the drum middle: the outermost tines stay clear of the side walls from 30° off-axis eyes. */
+    const val TINE_PITCH = 0.0108f
+    const val COMB_X = 0.052f
+    /** Free length of tine [r]: 5.2 cm (G4) down to 3.2 cm (C6), linear like a cut comb (tools/build_musicbox.py). */
+    const val TINE_LEN_LOW = 0.052f
+    const val TINE_LEN_HIGH = 0.032f
+    fun tineLen(r: Int): Float = TINE_LEN_LOW + (TINE_LEN_HIGH - TINE_LEN_LOW) * r / 17f
+    fun tineRootZ(r: Int): Float = TINE_TIP_Z + tineLen(r)
+    /** The middle tine's root (the comb base's mean back edge), for checks that used the old single root line. */
+    val TINE_ROOT_Z: Float = TINE_TIP_Z + (TINE_LEN_LOW + TINE_LEN_HIGH) / 2
+    fun tineX(r: Int): Float = COMB_X + (r - 8.5f) * TINE_PITCH
+    /** Tine click boxes: full pitch minus a 0.8 mm gap (v0.1.3; the 2D keyboard is the >= 48 dp way to pin a note). */
+    const val TINE_HIT_W = TINE_PITCH - 0.0008f
     const val TINE_HIT_Y0 = -0.11f; const val TINE_HIT_Y1 = -0.08f
     const val TINE_HIT_Z0 = 0.026f; const val TINE_HIT_Z1 = 0.09f
     /** The drum's click capsule radius (pins included). */
@@ -141,7 +150,7 @@ object Layout {
             Aabb("leftWall", V3(BX0, BY0, BZ0), V3(BX0 + 0.012f, BY1, BZ1)),
             Aabb("rightWall", V3(BX1 - 0.012f, BY0, BZ0), V3(BX1, BY1, BZ1)),
             Aabb("divider", V3(-0.08f, BY0, BZ0), V3(-0.07f, BY1, BZ1)),
-            Aabb("combBase", V3(-0.045f, -0.176f, 0.058f), V3(0.155f, TINE_Y, 0.09f)),
+            Aabb("combBase", V3(-0.045f, -0.176f, tineRootZ(17)), V3(0.155f, TINE_Y, 0.09f)),
             Aabb("drum", V3(DRUM.x - DRUM_L / 2, DRUM.y - DRUM_R, DRUM.z - DRUM_R), V3(DRUM.x + DRUM_L / 2, DRUM.y + DRUM_R, DRUM.z + DRUM_R)),
             Aabb("dancer", V3(WELL.x - DANCER_R, stage, WELL.z - DANCER_R), V3(WELL.x + DANCER_R, stage + DANCER_H, WELL.z + DANCER_R)),
             Aabb("key", KEY_HIT_MIN, KEY_HIT_MAX),
@@ -197,7 +206,7 @@ object Layout {
         for (x in listOf(BX0, BX1)) for (along in listOf(0f, LID_L)) for (out in listOf(-LID_T, LID_T)) pts += lidPoint(x, along, out = out)
         pts += Aabb("key", KEY_HIT_MIN, KEY_HIT_MAX).corners()
         pts += V3(WELL.x, STAGE_UP_Y + DANCER_H, WELL.z)
-        pts += listOf(V3(tineX(0), 0.05f, 0.02f), V3(tineX(7), 0.05f, 0.02f))
+        pts += listOf(V3(tineX(0), 0.05f, 0.02f), V3(tineX(Drum.TINES - 1), 0.05f, 0.02f))
         pts += cardCorners()
         return pts
     }

@@ -29,7 +29,7 @@ def load(name):
         return np.frombuffer(w.readframes(w.getnframes()), "<i2").astype(float) / 32768
 
 
-TINES = [load("tine_%d" % i) for i in range(1, 9)]
+TINES = [load("tine_%d" % i) for i in range(1, 19)]   # v0.1.3: 18 tines G4..C6
 CLICKS = [load(n) for n in ("click", "click_2", "click_3")]
 STOP = load("stop")
 
@@ -38,7 +38,7 @@ def songs():
     out = {}
     for line in open(SONGS, encoding="utf-8"):
         f = line.strip().split("|")
-        if len(f) < 9:
+        if line.startswith("#") or len(f) < 9:
             continue
         pins = [(int(c), int(t) - 1) for c, t in (p.split(".") for p in f[8].split(";"))]
         last = max(c for c, _ in pins)
@@ -50,7 +50,7 @@ def songs():
 class Mix:
     def __init__(self, seconds):
         self.buf = np.zeros(int(seconds * SR) + SR * 4)
-        self.voice = [None] * 8  # (start index, length) of the sounding voice per tine
+        self.voice = [None] * len(TINES)  # (start index, length) of the sounding voice per tine
 
     def add(self, x, t, g=1.0):
         i = int(t * SR)
@@ -156,7 +156,7 @@ def main(out, ver):
             Sx = np.clip((Sx + 100) / 80, 0, 1)
             im = Image.fromarray((Sx[::-1] * 255).astype(np.uint8)).resize((800, 140))
             canvas = Image.new("L", (800, 160), 0); canvas.paste(im, (0, 20))
-            ImageDraw.Draw(canvas).text((6, 3), "tine %d (C5..C6 #%d), 0-8 kHz, 0-%.1f s" % (i + 1, i + 1, len(x) / SR), fill=255)
+            ImageDraw.Draw(canvas).text((6, 3), "tine %d (G4..C6, %s), 0-8 kHz, 0-%.1f s" % (i + 1, ["G4","G#4","A4","A#4","B4","C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5","C6"][i], len(x) / SR), fill=255)
             rows.append(canvas)
         sheet = Image.new("L", (800, 160 * len(rows)))
         for i, r in enumerate(rows):
@@ -180,7 +180,7 @@ def main(out, ver):
     # D51 burst: one tine 10 times 80 ms apart, every pluck's peak
     mm = Mix(4)
     for k in range(10):
-        mm.tine(4, 0.08 * k)
+        mm.tine(12, 0.08 * k)   # G5 (tine 4 before v0.1.3)
     b = mm.buf[: 2 * SR]
     peaks = [20 * math.log10(np.abs(b[int(0.08 * k * SR): int(0.08 * k * SR) + int(0.03 * SR)]).max()) for k in range(10)]
     write(os.path.join(out, "burst10.wav"), b)

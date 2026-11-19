@@ -67,7 +67,7 @@
 
     <string name="how_to_title">怎么操作</string>
     <string name="how_to_lid">开 / 合盒盖：捏一下盒盖 · 手柄指着盒盖按扳机</string>
-    <string name="how_to_pin">钉一颗：捏一下某根齿 · 扳机点齿。点已经钉过的那列就拔掉</string>
+    <string name="how_to_pin">钉一颗：[钉谱…] 里点那个键 · 或捏 / 扳机点齿。点已经钉过的就拔掉</string>
     <string name="how_to_wind">上弦：捏一下钥匙 +25%，或捏住往下拉 · 扳机同样</string>
     <string name="how_to_scrub">手拨滚筒：捏住滚筒上下拉 · 按住扳机上下移</string>
     <string name="how_to_panel">面板没了：点盒子正面的铜牌</string>
@@ -89,7 +89,7 @@
     <string name="btn_clear_pins">清空…</string>
     <string name="card_on_drum">滚筒上：%1$s</string>
     <string name="card_pins">%1$d 颗钉 · %2$d 列</string>
-    <string name="edit_caption">点齿钉一颗 · %1$d 颗钉 · 第 %2$d 列，共 %3$d 列</string>
+    <string name="edit_caption">点键或点齿钉一颗 · %1$d 颗钉 · 第 %2$d 列，共 %3$d 列</string>
     <string name="btn_listen">试听</string>
     <string name="btn_listen_stop">停</string>
     <string name="group_kids">童谣</string>

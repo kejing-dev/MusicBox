@@ -32,7 +32,7 @@ private sealed interface Undo {
 }
 
 /**
- * The music box (design gameSpec): a 64-column x 8-tine drum, a spring measured in steps, a lid with a stopper, the
+ * The music box (design gameSpec): a 64-column x 18-tine drum (v0.1.3), a spring measured in steps, a lid with a stopper, the
  * dancer lift. Pure Kotlin, no Android: every action is a method, time only moves through [advance] (the simulation
  * thread calls it with wall-clock dt, so a slow render frame never slows the music, D55). Not thread-safe: callers
  * synchronise on the instance. Sounds are queued in [sfx] and drained by the caller.
@@ -196,7 +196,7 @@ class MusicBox(
 
     // ------------------------------------------------------------------ tines (design gameSpec.pinEntry)
 
-    /** A tap on tine [r] (0..7). Returns false when nothing happened (lid closed / locked). */
+    /** A tap on tine [r] (0..17; the 2D keyboard calls this too). Returns false when nothing happened (lid closed / locked). */
     fun tapTine(r: Int): Boolean {
         if (r !in 0 until Drum.TINES || locked) return false
         if (!lidOpen) { say(Notice.LID_CLOSED_EDIT); return false }

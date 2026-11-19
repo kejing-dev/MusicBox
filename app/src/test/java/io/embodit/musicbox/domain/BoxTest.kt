@@ -11,7 +11,7 @@ import java.io.File
 class BoxTest {
     companion object {
         val PRESETS: List<Song> by lazy { SongCodec.decodeAll(File("src/main/assets/songs.txt").readText(), preset = true) }
-        val C = intArrayOf(0, 0, 4, 4, 5, 5, 4) // 1-1-5-5-6-6-5 as tines 0..7
+        val C = intArrayOf(5, 5, 12, 12, 14, 14, 12) // 1-1-5-5-6-6-5 = C5 C5 G5 G5 A5 A5 G5 on the 18-tine comb (v0.1.3)
     }
 
     private fun box(mine: List<Song> = emptyList(), song: String? = null) = MusicBox(PRESETS, mine, song).apply { finishLoading(openLid = true) }
@@ -24,17 +24,31 @@ class BoxTest {
     // ------------------------------------------------------------------ songs
 
     @Test fun songsValid() {
-        assertEquals(17, PRESETS.size)
+        assertEquals(26, PRESETS.size)
         for (s in PRESETS) {
             assertTrue(s.id, s.pins.isNotEmpty() && s.pins.size <= Drum.PIN_CAP)
-            assertTrue(s.id, s.pins.all { it.col in 0..63 && it.tine in 0..7 })
+            assertTrue(s.id, s.pins.all { it.col in 0..63 && it.tine in 0 until Drum.TINES })
             assertTrue(s.id, s.length in 16..64 && s.length % 4 == 0)
-            assertTrue(s.id, s.nameZh.isNotBlank() && s.nameEn.isNotBlank() && s.bpm in 60..140)
+            assertTrue(s.id, s.nameZh.isNotBlank() && s.nameEn.isNotBlank() && s.bpm in 60..240)
         }
         assertEquals(48, PRESETS.first { it.id == "twinkle" }.length)
         // twinkle opens 1 1 5 5 6 6 5
         val tw = PRESETS.first { it.id == "twinkle" }
         for ((c, t) in C.withIndex()) assertTrue("twinkle col $c", Pin(c, t) in tw.pins)
+    }
+
+    @Test fun everyTineHasItsPitchAndOldFilesKeepTheirs() {
+        assertEquals(18, Drum.TINES)
+        assertEquals("G4", Comb.name(0)); assertEquals("C5", Comb.name(5)); assertEquals("C6", Comb.name(17))
+        assertEquals(7, Comb.blacks.size); assertEquals(11, Comb.whites.size)
+        // a my-tunes file written by v0.1.2 (no header, tines 1..8 = C5..C6) reads back at the same pitch
+        val old = "m1|我的曲子 1|My tune 1|||||100|0.1;1.5;2.8|7"
+        val s = SongCodec.decodeAll(old, preset = false).single()
+        assertEquals(setOf("C5", "G5", "C6"), s.pins.map { Comb.name(it.tine) }.toSet())
+        // and is written back in the new numbering, behind the header, unchanged on the next read
+        val again = SongCodec.decodeAll(SongCodec.encodeAll(listOf(s)), preset = false).single()
+        assertEquals(s, again)
+        assertTrue(SongCodec.encodeAll(listOf(s)).startsWith(SongCodec.HEADER + "\n"))
     }
 
     @Test fun codecRoundTrip() {
@@ -72,7 +86,7 @@ class BoxTest {
         b.tapKey()                                   // +16 steps, starts at column 7
         val t0 = b.t
         b.advance(0.6 + 0.35)                       // col 7 -> 8 (= L) at 100 bpm 0.6 s, fast-forward <= 0.3 s
-        val firstZero = plucks(b).firstOrNull { it.second == 0 }
+        val firstZero = plucks(b).firstOrNull { it.second == C[0] }
         assertNotNull(firstZero)
         assertTrue("wrap took ${firstZero!!.first - t0}", firstZero.first - t0 <= 0.6 + 0.3 + 0.01)
         b.advance(5.0)
@@ -233,9 +247,9 @@ class BoxTest {
         assertTrue(b.dancerAngle < a0)
         b.endScrub(); b.advance(0.3)
         assertEquals(0, b.logicalCol())
-        assertEquals(listOf(0, 4, 4), fwd)                 // columns 1, 2, 3
-        assertEquals(listOf(4, 0), back.take(2))            // reverse: columns 2, 1, then 0
-        assertEquals(setOf(0, 2), back.drop(2).toSet())
+        assertEquals(listOf(5, 12, 12), fwd)               // columns 1, 2, 3
+        assertEquals(listOf(12, 5), back.take(2))          // reverse: columns 2, 1, then 0
+        assertEquals(setOf(5, 9), back.drop(2).toSet())
     }
 
     @Test fun scrubSpeedIsCapped() {
@@ -283,7 +297,7 @@ class BoxTest {
 
     @Test fun undoStackIsFiftyDeep() {
         val b = mineBox()
-        repeat(60) { b.tapTine(it % 8); b.advance(0.2) }
+        repeat(60) { b.tapTine(it % Drum.TINES); b.advance(0.2) }
         var n = 0
         while (b.undo()) n++
         assertEquals(50, n)
