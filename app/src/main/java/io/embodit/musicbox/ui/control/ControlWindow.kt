@@ -24,12 +24,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +66,7 @@ import io.embodit.musicbox.domain.Language
 import io.embodit.musicbox.domain.Lines
 import io.embodit.musicbox.domain.Settings
 import io.embodit.musicbox.domain.Song
+import io.embodit.musicbox.domain.SongGroup
 import io.embodit.musicbox.platform.BoxUi
 import io.embodit.musicbox.platform.Graph
 import io.embodit.musicbox.platform.TAG
@@ -75,8 +83,8 @@ import kotlin.system.exitProcess
 
 /**
  * The control window (Planar WindowContainer beside the box, 560 x 600 dp): all 2D UI, three pages switched by the
- * native SpatialUI TabBar (D8): Play / Tunes / Settings. No page scrolls (D44); each page spreads its rows between the
- * header and the last row, so the blank outside the content is only the window padding. Confirmations unfold in place (P4).
+ * native SpatialUI TabBar (D8): Play / Tunes / Settings. Only the classics list scrolls (v0.1.2, 17 tunes in groups);
+ * every other page fits (D44) and spreads its rows between the header and the last row, so the blank outside the content is only the window padding. Confirmations unfold in place (P4).
  */
 @Composable
 fun ControlWindow() {
@@ -88,13 +96,17 @@ fun ControlWindow() {
     val nav = LocalSpatialNavigator.current
     DisposableEffect(owner, nav) {
         graph.window.attachPanel(nav)
-        val obs = LifecycleEventObserver { _, e -> graph.window.onPanelLifecycle(e.name) }
+        val obs = LifecycleEventObserver { _, e ->
+            graph.window.onPanelLifecycle(e.name)
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_STOP) graph.preview.stop("panel stopped")
+        }
         owner.lifecycle.addObserver(obs)
         onDispose { owner.lifecycle.removeObserver(obs) }
     }
     LaunchedEffect(Ui.page) {
         Log.i(TAG, "PAGE ${Ui.page} ${Ui.page.stateId}")
         if (Ui.page != Page.SETTINGS) Ui.howTo = false
+        if (Ui.page != Page.SONGS) graph.preview.stop("left tunes")
         if (Ui.confirm is Confirm.Quit && Ui.page != Page.SETTINGS) Ui.confirm = null
     }
     LaunchedEffect(Ui.editPins) { Log.i(TAG, "EDIT view=${Ui.editPins}") }
@@ -211,7 +223,7 @@ private fun PlayKeys(ui: BoxUi, settings: Settings, graph: Graph, playing: Boole
         PrimaryButton(stringResource(R.string.btn_stop), "play/stop", icon = R.drawable.ic_stop, onClick = { graph.box.act("btn stop") { it.stop() } }, modifier = Modifier.fillMaxWidth())
     } else {
         PrimaryButton(stringResource(R.string.btn_wind_play), "play/wind", icon = R.drawable.ic_play, enabled = ui.state != BoxState.SWAPPING,
-            onClick = { graph.box.act("btn wind&play") { it.windAndPlay() } }, modifier = Modifier.fillMaxWidth())
+            onClick = { graph.preview.stop("wind"); graph.box.act("btn wind&play") { it.windAndPlay() } }, modifier = Modifier.fillMaxWidth())
     }
     Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
         Txt(stringResource(R.string.spring_label), "play/spring", style = PicoTheme.typography.labelLarge, modifier = Modifier.width(96.dp))
@@ -266,11 +278,8 @@ private fun SongsPage(ui: BoxUi, settings: Settings, graph: Graph) {
                     onClick = { graph.box.act("new tune") { it.newSong() } })
             } else MuteButton(settings, graph, "songs")
         }
-        if (!mineTab) {
-            Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.SpaceBetween) {
-                ui.presets.forEach { s -> SongRow(s, zh, s.id == ui.song?.id, sub = "${s.tag(zh)} · ${s.lic(zh)}", graph = graph, onDelete = null) }
-            }
-        } else {
+        if (!mineTab) ClassicsList(ui, zh, graph, Modifier.fillMaxWidth().weight(1f))
+        else {
             // my tunes from the top, then the tune on the drum: its roll and [改这首 / 钉谱…] (q1-1: useful, no blank band, D44)
             val fmt = remember { SimpleDateFormat("MM-dd HH:mm", Locale.US) }
             ui.mine.forEach { s ->
@@ -279,6 +288,104 @@ private fun SongsPage(ui: BoxUi, settings: Settings, graph: Graph) {
             }
             if (ui.mine.size < Drum.MY_CAP) OnDrumCard(ui, zh, graph, Modifier.fillMaxWidth().weight(1f))
         }
+    }
+}
+
+/**
+ * The classics (v0.1.2: 17 tunes) as one scrolling list in four groups (童谣 / 民歌 / 古典 / 节日), each with a header line.
+ * A row loads the tune on the drum; [试听] beside it plays its opening without touching the drum (one preview at a time).
+ * Names and sources wrap instead of being cut (D13 / D16).
+ */
+@Composable
+private fun ClassicsList(ui: BoxUi, zh: Boolean, graph: Graph, modifier: Modifier) {
+    val previewing by graph.preview.playing.collectAsStateWithLifecycle()
+    val groups = remember(ui.presets) { SongGroup.grouped(ui.presets) }
+    LaunchedEffect(Ui.classicsScrollTo) {
+        val to = Ui.classicsScrollTo ?: return@LaunchedEffect
+        Ui.classicsList.scrollToItem(to.coerceAtLeast(0))
+        Ui.classicsScrollTo = null
+        Log.i(TAG, "SCROLL classics -> $to (first visible ${Ui.classicsList.firstVisibleItemIndex})")
+    }
+    // D16 first screen: at the top the list ends on the last whole row (no half-cut row); the space under it says how many
+    // more tunes are below. Once scrolled, the list takes the full height (rows slide in and out at the edges).
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val total = groups.sumOf { it.second.size }
+    var firstScreen by remember(zh, ui.song?.id, total) { mutableStateOf<Pair<androidx.compose.ui.unit.Dp, Int>?>(null) }
+    val atTop by remember { derivedStateOf { Ui.classicsList.firstVisibleItemIndex == 0 && Ui.classicsList.firstVisibleItemScrollOffset == 0 } }
+    LaunchedEffect(zh, ui.song?.id, total) {
+        snapshotFlow { Ui.classicsList.layoutInfo }.collect { li ->
+            if (firstScreen != null || !atTop || li.visibleItemsInfo.isEmpty()) return@collect
+            val whole = li.visibleItemsInfo.filter { it.offset + it.size <= li.viewportEndOffset }
+            if (whole.size == li.totalItemsCount) return@collect
+            val end = whole.maxOf { it.offset + it.size }
+            val rowsShown = whole.count { it.key.toString().startsWith("g-").not() }
+            firstScreen = with(density) { end.toDp() } to (total - rowsShown)
+            Log.i(TAG, "CLASSICS first screen: ${whole.size} whole items, ${total - rowsShown} below")
+        }
+    }
+    val clip = firstScreen?.takeIf { atTop }
+    Column(modifier) {
+        LazyColumn(
+            if (clip != null) Modifier.fillMaxWidth().height(clip.first) else Modifier.fillMaxWidth().weight(1f),
+            state = Ui.classicsList, verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            groups.forEach { (g, songs) ->
+                item(key = "g-${g.id}") { GroupHeader(g, songs.size) }
+                items(songs, key = { it.id }) { s ->
+                    ClassicRow(s, zh, current = s.id == ui.song?.id, previewing = previewing == s.id, graph = graph, ui = ui)
+                }
+            }
+        }
+        if (clip != null) {
+            Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                Txt(stringResource(R.string.more_below, clip.second) + "  ↓", "songs/more", style = PicoTheme.typography.bodyMedium, color = PicoTheme.colorScheme.labelSecondary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupHeader(g: SongGroup, n: Int) {
+    val name = stringResource(when (g) {
+        SongGroup.KIDS -> R.string.group_kids
+        SongGroup.FOLK -> R.string.group_folk
+        SongGroup.CLASSIC -> R.string.group_classic
+        SongGroup.HOLIDAY -> R.string.group_holiday
+    })
+    Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.Bottom) {
+        Txt(name, "songs/group", style = PicoTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+        Spacer(Modifier.width(10.dp))
+        Txt(stringResource(R.string.group_count, n), "songs/group-n", style = PicoTheme.typography.bodySmall, color = PicoTheme.colorScheme.labelSecondary)
+    }
+}
+
+/** One classic: [name / tag · source] loads it on the drum; [试听 / 停] previews its opening. */
+@Composable
+private fun ClassicRow(s: Song, zh: Boolean, current: Boolean, previewing: Boolean, graph: Graph, ui: BoxUi) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.weight(1f).heightIn(min = 72.dp).clip(RoundedCornerShape(20.dp)).background(if (current) MBColors.PrimaryContainer else MBColors.TagFace)
+                .clickable { Log.i(TAG, "SONG pick ${s.id}"); graph.box.act("song ${s.id}") { it.selectSong(s.id) }; graph.box.saveNow() }
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (current) {
+                Box(Modifier.size(10.dp).clip(CircleShape).background(MBColors.Primary))
+                Spacer(Modifier.width(10.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Txt(s.name(zh), "songs/name", style = PicoTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), color = MBColors.Ink, maxLines = 2)
+                Txt("${s.tag(zh)} · ${s.lic(zh)}", "songs/sub", style = PicoTheme.typography.bodySmall, color = MBColors.InkSecondary, maxLines = 2)
+                if (current) Txt(stringResource(R.string.now_playing), "songs/current", style = PicoTheme.typography.labelMedium, color = MBColors.Primary)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        val onListen = {
+            if (!previewing && (ui.state.playing || ui.state == BoxState.LID_PAUSED)) graph.box.act("preview stops drum") { it.stop() }
+            graph.preview.toggle(s)
+        }
+        if (previewing) PrimaryButton(stringResource(R.string.btn_listen_stop), "songs/listen-stop", icon = R.drawable.ic_stop, onClick = onListen, modifier = Modifier.width(132.dp), minWidth = 132.dp)
+        else SecondaryButton(stringResource(R.string.btn_listen), "songs/listen", icon = R.drawable.ic_play, onClick = onListen, modifier = Modifier.width(132.dp))
     }
 }
 
@@ -467,6 +574,7 @@ private fun ConfirmPage(c: Confirm, ui: BoxUi, settings: Settings, graph: Graph)
 internal fun exitApp(context: Context, graph: Graph) {
     Log.i(TAG, "EXIT save + release + close windows + finishAndRemoveTask + exitProcess")
     runCatching { graph.box.onBackground() }
+    runCatching { graph.preview.stop("exit") }
     runCatching { graph.box.stop() }
     runCatching { graph.sounds.release() }
     runCatching { graph.window.closeAll() }

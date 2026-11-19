@@ -61,10 +61,10 @@ internal fun Txt(
 
 /** Buttons are 64 dp tall (profile B31: main buttons >= 64 dp; gate button-height). */
 @Composable
-internal fun PrimaryButton(text: String, tag: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: Int? = null) {
+internal fun PrimaryButton(text: String, tag: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: Int? = null, minWidth: Dp = 160.dp) {
     Button(
         onClick = onClick, modifier = modifier, enabled = enabled,
-        size = ButtonDefaults.Regular.copy(height = 64.dp, minWidth = 160.dp),
+        size = ButtonDefaults.Regular.copy(height = 64.dp, minWidth = minWidth),
         shape = RoundedCornerShape(32.dp),
         colors = ButtonDefaults.buttonColors(containerColor = PicoTheme.colorScheme.interaction, contentColor = PicoTheme.colorScheme.labelPrimaryLight),
     ) {

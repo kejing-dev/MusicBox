@@ -241,7 +241,7 @@ class MusicBox(
         if (!song.preset) return true
         if (mine.size >= Drum.MY_CAP) { say(Notice.FULL); return false }
         val (zh, en) = SongNames.fork(song, mine)
-        val copy = song.copy(id = newId(), preset = false, nameZh = zh, nameEn = en, tagZh = "", tagEn = "", licZh = song.licZh, licEn = song.licEn, updatedAt = wallClock())
+        val copy = song.copy(id = newId(), preset = false, nameZh = zh, nameEn = en, tagZh = "", tagEn = "", licZh = song.licZh, licEn = song.licEn, updatedAt = wallClock(), group = "")
         mine = mine + copy
         song = copy
         undo.clear()

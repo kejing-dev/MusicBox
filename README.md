@@ -12,7 +12,7 @@
 - **拧发条**：钥匙下 8 格余量，唱着唱着减少，最后渐慢停下；也可以按 [上弦并播放]
 - **拨滚筒**：用手前后转，一格一格出声
 - **钉谱**：点齿就在当前列钉一颗，播放中也能边听边钉；退一拍、空一拍、撤销 50 步
-- **曲子**：6 首公有领域曲（小星星、欢乐颂、玛丽有只小羊羔、铃儿响叮当、划船、卡农）+ 最多 6 首自己的，本机保存
+- **曲子**：17 首公有领域曲，分 童谣 / 民歌 / 古典 / 节日 四组，每行可 [试听]；另有最多 6 首自己的，本机保存
 - **木色**：胡桃木 / 枫木 / 红漆；快慢 50%–150%；静音常显
 - **声音**：真实八音盒单音的 CC0 录音，按 C 大调变调；节拍按真实时钟走，掉帧也不慢
 - 木盒在系统的立体窗口（Shared Space 体积）里，可拖动；控制窗用原生页签：播放 / 曲子 / 设置
@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | ![正在唱](docs/screenshots/01-singing-zh.jpg) 小星星正在唱，舞者跟着滚筒转 | ![播放页](docs/screenshots/02-play-zh.jpg) 播放页：发条余量、快慢、[钉谱…] |
-| ![钉谱屏](docs/screenshots/03-edit-zh.jpg) 钉谱屏：点齿钉音，[钉好了] 回播放 | ![曲子](docs/screenshots/04-tunes-zh.jpg) 曲子：6 首公有领域曲 |
+| ![钉谱屏](docs/screenshots/03-edit-zh.jpg) 钉谱屏：点齿钉音，[钉好了] 回播放 | ![曲子](docs/screenshots/04-tunes-zh.jpg) 曲子：17 首公有领域曲，分组可滑、每行试听 |
 | ![我的](docs/screenshots/05-mine-zh.jpg) 我的曲子：滚筒上的曲子卡 + 小卷谱 | ![红漆](docs/screenshots/06-red-zh.jpg) 红漆木盒 |
 | ![设置](docs/screenshots/07-settings-zh.jpg) 设置：语言、音量、木色，关于 · v0.1.1 | |
 
@@ -60,7 +60,7 @@ A wooden music box that sings on your desk, for PICO OS 6 Shared Space. Wind it 
 - **Wind**: 8 cells of spring under the key run down as it plays, then it slows and stops; or press [Wind & play]
 - **Drum**: turn it by hand, note by note
 - **Pin a tune**: tap a tine to pin the current column, even while it plays; back, rest, 50-step undo
-- **Tunes**: six public-domain tunes (Twinkle, Ode to Joy, Mary Had a Little Lamb, Jingle Bells, Lightly Row, Canon) plus up to six of your own, saved on device
+- **Tunes**: 17 public-domain tunes in four groups (Kids, Folk, Classical, Holiday), each with [Listen], plus up to six of your own, saved on device
 - **Finish**: walnut / maple / red lacquer; speed 50–150 %; mute always on screen
 - **Sound**: real CC0 recordings of a music box, tuned to C major; timing follows the real clock, so dropped frames don't slow the tune
 - The box lives in a system volume you can move; the control window uses the native TabBar: Play / Tunes / Settings

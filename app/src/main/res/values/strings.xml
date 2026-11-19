@@ -97,4 +97,12 @@
     <string name="card_on_drum">On the drum: %1$s</string>
     <string name="card_pins">%1$d pins · %2$d columns</string>
     <string name="edit_caption">Tap a tine to pin · %1$d pins · column %2$d of %3$d</string>
+    <string name="btn_listen">Listen</string>
+    <string name="btn_listen_stop">Stop</string>
+    <string name="group_kids">Kids</string>
+    <string name="group_folk">Folk</string>
+    <string name="group_classic">Classical</string>
+    <string name="group_holiday">Holiday</string>
+    <string name="group_count">%1$d tunes</string>
+    <string name="more_below">Scroll down for %1$d more</string>
 </resources>

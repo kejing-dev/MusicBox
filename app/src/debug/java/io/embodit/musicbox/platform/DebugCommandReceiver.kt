@@ -34,9 +34,22 @@ import kotlinx.coroutines.launch
  *   spring <0..1> · song <id> · speed <0.5..1.5> · col N · pins "c.t;c.t" (t = 1..8) · windplay · stop · back · rest · undo
  *   hold <ms>|off (freeze the box N ms from now) · lang zh|en|system · page play|songs|settings · finish walnut|maple|red
  *   edit on|off (pin-edit keys on the Play page) · mute on|off · volume 0..2 · coach on|off · nearhint on|off · confirm clear|quit · yes · no · newsong · closepanel
+ *   goto P2end (classics scrolled to the end) · scroll top|end|kids|folk|classic|holiday|<index> · listen <id>|off (the row's [试听] path)
  *   orient on|off (F↑ test textures) · b0hold on|off · replay "<holder>" · dump · evidence
  */
 class DebugCommandReceiver : BroadcastReceiver() {
+    /** Item index in the classics LazyColumn (a header per group, then its rows) for `scroll`. */
+    private fun classicsIndex(a: String, graph: Graph? = null): Int {
+        val presets = (graph ?: return a.toIntOrNull() ?: 0).box.box.presets
+        val groups = io.embodit.musicbox.domain.SongGroup.grouped(presets)
+        val total = groups.sumOf { it.second.size + 1 }
+        if (a == "top") return 0
+        if (a == "end") return total - 1
+        var i = 0
+        for ((g, songs) in groups) { if (g.id == a) return i; i += songs.size + 1 }
+        return a.toIntOrNull() ?: 0
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         val graph = Graph.from(context)
         val ctl = graph.box
@@ -54,6 +67,7 @@ class DebugCommandReceiver : BroadcastReceiver() {
                 b.stop(); b.selectSong("twinkle", animate = false); b.debugLidInstant(false); b.debugSetPos(0)
             }
             Ui.page = Page.PLAY; Ui.confirm = null; Ui.howTo = false; Ui.songsTab = 0; Ui.editPins = false
+            graph.preview.stop("reset"); Ui.classicsScrollTo = 0
             ctl.debugNearHint(false)
             if (!graph.window.panelOpen) graph.window.open("reset")
         }
@@ -96,6 +110,7 @@ class DebugCommandReceiver : BroadcastReceiver() {
                     "B8" -> { open(); later(700) { ctl.act("goto B8") { it.selectSong("ode"); it.freezeAt = it.t + 0.1 } } }
                     "B9" -> { open(); ctl.act("goto B9") { it.debugSetPos(20) }; later(700) { ctl.act("goto B9b") { it.windAndPlay(); it.freezeAt = it.t + 0.15 } } }
                     "P2" -> { open(); Ui.page = Page.SONGS }
+                    "P2end" -> { open(); Ui.page = Page.SONGS; later(300) { Ui.classicsScrollTo = classicsIndex("end", graph) } }
                     "P2mine" -> { mine(0); open(); Ui.page = Page.SONGS; Ui.songsTab = 1 }
                     "P2mine1", "P2mine2", "P2mine3", "P2mine4", "P2mine5" -> { mine(a.last() - '0'); open(); Ui.page = Page.SONGS; Ui.songsTab = 1 }
                     "EDIT" -> { open(); Ui.editPins = true }
@@ -110,6 +125,12 @@ class DebugCommandReceiver : BroadcastReceiver() {
                     "P5open" -> { open(); graph.window.closeControlOnly() }
                     else -> Log.w(TAG, "CMD goto: unknown state $a")
                 }
+            }
+            "scroll" -> { Ui.page = Page.SONGS; Ui.songsTab = 0; Ui.classicsScrollTo = classicsIndex(a, graph) }
+            "listen" -> if (a == "off" || a.isEmpty()) graph.preview.stop("debug") else ctl.box.presets.firstOrNull { it.id == a }?.let { s ->
+                // the same path as the row's [试听]: a playing drum stops first, then the preview toggles
+                if (ctl.ui.value.state.playing) ctl.act("preview stops drum") { it.stop() }
+                graph.preview.toggle(s)
             }
             "tap" -> tap(if (f.firstOrNull() == "tine") "tine:${f.getOrNull(1)}" else a)
             "drag" -> { val part = f.getOrNull(0) ?: "key"; val cm = f.getOrNull(1)?.toFloatOrNull() ?: 3f; drag(part, cm); later(12 * 30 + 200L) { dragEnd(part) } }

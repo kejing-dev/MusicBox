@@ -83,7 +83,7 @@ fun BoxScreen() {
     DisposableEffect(owner) {
         val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
             when (e) {
-                androidx.lifecycle.Lifecycle.Event.ON_STOP -> { Log.i(TAG, "LIFECYCLE background"); graph.box.onBackground() }
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> { Log.i(TAG, "LIFECYCLE background"); graph.preview.stop("background"); graph.box.onBackground() }
                 androidx.lifecycle.Lifecycle.Event.ON_RESUME -> {
                     Log.i(TAG, "LIFECYCLE resume panel=${graph.window.panelState}")
                     if (graph.window.panelState == "ON_DESTROY") graph.window.open("resume")

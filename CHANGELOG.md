@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## v0.1.2 · 2026-11-18
+
+- 经典曲从 6 首加到 17 首，全部公有领域，每首写明来源：童谣（小星星、玛丽有只小羊羔、小蜜蜂、伦敦桥、划船歌、两只老虎、王老先生有块地）、民歌（茉莉花、噢！苏珊娜、圣者进行曲）、古典（欢乐颂、卡农、勃拉姆斯摇篮曲、格里格《晨景》、德沃夏克《念故乡》）、节日（铃儿响叮当、普世欢腾）
+- 曲子页按 童谣 / 民歌 / 古典 / 节日 分组，列表可上下滑；每行一个 [试听]：只放这首开头约 8 秒，不动滚筒；再点一下或开始播放就停
+- 音梳只有 C5–C6 八根白键齿：要升降号或超过一个八度的曲子（生日快乐、致爱丽丝、绿袖子、友谊地久天长、平安夜等）没放进来，宁缺不改调
+- The classics grow from 6 to 17 public-domain tunes, each with its source: Kids, Folk, Classical and Holiday groups
+- The Tunes list is grouped and scrolls; every row has [Listen], which plays about 8 s of the opening without touching the drum (tap again, or start the box, to stop)
+- The comb has eight natural tines C5–C6, so tunes that need a sharp or more than an octave (Happy Birthday, Für Elise, Greensleeves, Auld Lang Syne, Silent Night…) are left out rather than bent
+
 ## v0.1.1 · 2026-11-18
 
 - 钉谱改成就地展开的「钉谱屏」：播放页只留 [上弦并播放]、快慢和 [钉谱…]；点 [钉谱…] 才展开 [◂ 退一拍] [空一拍 ▸] [撤销] [清空…] [钉好了]，这一屏像确认页一样收起 TabBar（每屏可点控件 ≤ 7，模拟器 QA #1 打回项）

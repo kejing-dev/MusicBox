@@ -1,5 +1,6 @@
 package io.embodit.musicbox.ui
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,4 +30,8 @@ object Ui {
     var howTo by mutableStateOf(false)
     /** Play page: the pin-edit keys unfold in place of wind / spring / speed (B31: <= 7 tappable per screen). */
     var editPins by mutableStateOf(false)
+    /** The classics list on the Tunes page (v0.1.2: 17 tunes in groups, scrolls); kept here so it survives page switches. */
+    val classicsList = LazyListState()
+    /** Debug: a list index to scroll the classics to (consumed by the page). */
+    var classicsScrollTo by mutableStateOf<Int?>(null)
 }

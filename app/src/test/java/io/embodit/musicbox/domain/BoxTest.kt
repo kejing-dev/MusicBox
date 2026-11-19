@@ -24,7 +24,7 @@ class BoxTest {
     // ------------------------------------------------------------------ songs
 
     @Test fun songsValid() {
-        assertEquals(6, PRESETS.size)
+        assertEquals(17, PRESETS.size)
         for (s in PRESETS) {
             assertTrue(s.id, s.pins.isNotEmpty() && s.pins.size <= Drum.PIN_CAP)
             assertTrue(s.id, s.pins.all { it.col in 0..63 && it.tine in 0..7 })

@@ -31,6 +31,8 @@ data class Song(
     val bpm: Int = 100,
     val pins: Set<Pin> = emptySet(),
     val updatedAt: Long = 0L,
+    /** Presets only: the Tunes-list group ([SongGroup] id); empty for my tunes. */
+    val group: String = "",
 ) {
     val length: Int get() = Drum.length(pins)
     fun name(zh: Boolean) = if (zh) nameZh else nameEn
@@ -38,7 +40,23 @@ data class Song(
     fun lic(zh: Boolean) = if (zh) licZh else licEn
 }
 
-/** `id|nameZh|nameEn|tagZh|tagEn|licZh|licEn|bpm|c.t;c.t…` (t = tine 1..8), the format of assets/songs.txt and files/songs.txt. */
+/** The Tunes-list groups of the classics, in list order (v0.1.2: 17 tunes did not fit one screen). */
+enum class SongGroup(val id: String) {
+    KIDS("kids"), FOLK("folk"), CLASSIC("classic"), HOLIDAY("holiday");
+
+    companion object {
+        fun of(s: Song): SongGroup = entries.firstOrNull { it.id == s.group } ?: KIDS
+
+        /** The classics grouped in list order; songs keep their file order inside a group. */
+        fun grouped(presets: List<Song>): List<Pair<SongGroup, List<Song>>> =
+            entries.map { g -> g to presets.filter { of(it) == g } }.filter { it.second.isNotEmpty() }
+    }
+}
+
+/**
+ * `id|nameZh|nameEn|tagZh|tagEn|licZh|licEn|bpm|c.t;c.t…|updatedAt|group` (t = tine 1..8; the last two optional), the format
+ * of assets/songs.txt and files/songs.txt.
+ */
 object SongCodec {
     fun decodeLine(line: String, preset: Boolean): Song? = runCatching {
         val f = line.trim().split("|")
@@ -47,13 +65,13 @@ object SongCodec {
             val (c, t) = p.split("."); Pin(c.toInt(), t.toInt() - 1)
         }.toSet()
         require(pins.size <= Drum.PIN_CAP)
-        Song(f[0], preset, f[1], f[2], f[3], f[4], f[5], f[6], f[7].toInt(), pins, f.getOrNull(9)?.toLongOrNull() ?: 0L)
+        Song(f[0], preset, f[1], f[2], f[3], f[4], f[5], f[6], f[7].toInt(), pins, f.getOrNull(9)?.toLongOrNull() ?: 0L, f.getOrNull(10)?.trim() ?: "")
     }.getOrNull()
 
     fun encodeLine(s: Song): String = listOf(
         s.id, s.nameZh.clean(), s.nameEn.clean(), s.tagZh.clean(), s.tagEn.clean(), s.licZh.clean(), s.licEn.clean(), s.bpm.toString(),
         s.pins.sortedWith(compareBy({ it.col }, { it.tine })).joinToString(";") { "${it.col}.${it.tine + 1}" }, s.updatedAt.toString(),
-    ).joinToString("|")
+    ).let { if (s.group.isNotEmpty()) it + s.group.clean() else it }.joinToString("|")
 
     fun decodeAll(text: String, preset: Boolean): List<Song> = text.lines().filter { it.isNotBlank() }.mapNotNull { decodeLine(it, preset) }
 
@@ -78,5 +96,18 @@ object SongNames {
         fun en(k: Int) = if (k == 1) "${of.nameEn} · mine" else "${of.nameEn} · mine $k"
         while (mine.any { it.nameZh == zh(n) || it.nameEn == en(n) }) n++
         return zh(n) to en(n)
+    }
+}
+
+/** [试听] (v0.1.2): which columns of a tune its preview plays, and when, at the tune's own bpm (speed 1). */
+object PreviewPlan {
+    const val SECONDS = 8.0
+
+    /** (seconds from the start, tines plucked) for each non-empty column inside the first [maxS] seconds of the tune. */
+    fun of(song: Song, maxS: Double = SECONDS): List<Pair<Double, List<Int>>> {
+        val spc = 60.0 / song.bpm.coerceAtLeast(1)
+        val cols = minOf(song.length, (maxS / spc).toInt() + 1)
+        return song.pins.filter { it.col < cols }.groupBy { it.col }.toSortedMap()
+            .map { (c, ps) -> c * spc to ps.map { it.tine }.sorted() }
     }
 }

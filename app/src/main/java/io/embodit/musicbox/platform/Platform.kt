@@ -19,6 +19,7 @@ import io.embodit.musicbox.domain.BoxState
 import io.embodit.musicbox.domain.Drum
 import io.embodit.musicbox.domain.MusicBox
 import io.embodit.musicbox.domain.Notice
+import io.embodit.musicbox.domain.PreviewPlan
 import io.embodit.musicbox.domain.Settings
 import io.embodit.musicbox.domain.Sfx
 import io.embodit.musicbox.domain.Song
@@ -56,6 +57,7 @@ class Graph(context: Context) {
     val songStore = SongStore(context)
     val window = WindowCtl()
     val box = BoxCtl(Presets.load(context), songStore, settings, sounds)
+    val preview = Preview(sounds)
 
     init {
         scope.launch {
@@ -66,6 +68,8 @@ class Graph(context: Context) {
             }
         }
         box.start()
+        // the box and a preview never sound together: a pluck from the drum ends the preview (Preview.start stops the drum)
+        box.onPluck = { preview.stop("drum plays") }
     }
 
     companion object {
@@ -107,6 +111,8 @@ class BoxCtl(presets: List<Song>, private val store: SongStore, private val sett
         private set
     @Volatile var panelOpen = true
     var onPanelLine: (() -> Unit)? = null
+    /** Called (on the sim thread) when the drum plucks a tine: ends a running preview. */
+    @Volatile var onPluck: (() -> Unit)? = null
     private val io = Handler(Looper.getMainLooper())
     private var lastUnderLog = 0L
 
@@ -141,6 +147,7 @@ class BoxCtl(presets: List<Song>, private val store: SongStore, private val sett
             if (box.revision != savedRevision) { savedRevision = box.revision; dirtyAt = SystemClock.uptimeMillis() }
             publish()
         }
+        if (due.any { it.kind == Sfx.Kind.TINE && !it.soft }) onPluck?.invoke()
         for (s in due) sounds.play(s)
         if (log) Log.i(TAG, "ACT $why -> ${box.state().id} col=${box.logicalCol()} spring=${"%.1f".format(box.spring)} pins=${box.pins.size}")
         if (dirtyAt > 0 && SystemClock.uptimeMillis() - dirtyAt > 500) { dirtyAt = 0; saveNow() }
@@ -249,4 +256,43 @@ class SoundPlayer(context: Context) {
     }
 
     fun release() = runCatching { pool.release() }
+}
+
+/**
+ * [试听] on the Tunes list (v0.1.2): plays the opening of a tune (about 8 s, at most the whole tune) through the same
+ * [SoundPlayer] voices as the drum, without touching the drum, the spring or the tune on it. One preview at a time; a
+ * second tap, another row, leaving the Tunes page, the drum starting to play, or the app going to the background ends it.
+ * The notes are timed on their own audio-priority thread by the wall clock (postAtTime), so a 10 fps panel never slows it.
+ */
+class Preview(private val sounds: SoundPlayer) {
+    private val _playing = MutableStateFlow<String?>(null)
+    val playing: StateFlow<String?> = _playing.asStateFlow()
+    private val thread = HandlerThread("preview", Process.THREAD_PRIORITY_URGENT_AUDIO).also { it.start() }
+    private val h = Handler(thread.looper)
+    private val token = Any()
+
+    /** The column times of a preview: the columns of the first [maxS] seconds at the tune's own bpm, no more than its length. */
+    fun plan(song: Song): List<Pair<Double, List<Int>>> = PreviewPlan.of(song)
+
+    fun toggle(song: Song) { if (_playing.value == song.id) stop("tap again") else start(song) }
+
+    fun start(song: Song) {
+        stop(null)
+        val plan = plan(song)
+        if (plan.isEmpty()) return
+        _playing.value = song.id
+        Log.i(TAG, "PREVIEW start ${song.id} notes=${plan.sumOf { it.second.size }} for ${"%.1f".format(plan.last().first)} s")
+        val t0 = SystemClock.uptimeMillis() + 60
+        for ((at, tines) in plan) {
+            h.postAtTime({ for (t in tines) sounds.play(Sfx(Sfx.Kind.TINE, tine = t)) }, token, t0 + (at * 1000).toLong())
+        }
+        val end = plan.last().first + 1.2
+        h.postAtTime({ if (_playing.value == song.id) { _playing.value = null; Log.i(TAG, "PREVIEW end ${song.id}") } }, token, t0 + (end * 1000).toLong())
+    }
+
+    fun stop(why: String?) {
+        h.removeCallbacksAndMessages(token)
+        val was = _playing.value
+        if (was != null) { _playing.value = null; if (why != null) Log.i(TAG, "PREVIEW stop $was ($why)") }
+    }
 }

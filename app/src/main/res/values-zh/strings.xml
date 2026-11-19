@@ -90,4 +90,12 @@
     <string name="card_on_drum">滚筒上：%1$s</string>
     <string name="card_pins">%1$d 颗钉 · %2$d 列</string>
     <string name="edit_caption">点齿钉一颗 · %1$d 颗钉 · 第 %2$d 列，共 %3$d 列</string>
+    <string name="btn_listen">试听</string>
+    <string name="btn_listen_stop">停</string>
+    <string name="group_kids">童谣</string>
+    <string name="group_folk">民歌</string>
+    <string name="group_classic">古典</string>
+    <string name="group_holiday">节日</string>
+    <string name="group_count">%1$d 首</string>
+    <string name="more_below">往下滑，还有 %1$d 首</string>
 </resources>
