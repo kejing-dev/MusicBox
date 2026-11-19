@@ -93,10 +93,11 @@ private fun Key(r: Int, zh: Boolean, enabled: Boolean, onKey: (Int) -> Unit, mod
             .clip(shape)
             .background(if (pressed) MBColors.Brass else if (hovered && enabled) face.copy(alpha = 0.82f) else face)
             .border(if (hovered && enabled) 2.dp else 1.dp, if (hovered && enabled) PicoTheme.colorScheme.interaction else MBColors.RollLineStrong, shape)
-            .semantics { contentDescription = Comb.name(r) }
             .clickable(interactionSource = src, indication = null, enabled = enabled, role = Role.Button) {
                 Log.i(TAG, "KEY $r ${Comb.name(r)}"); onKey(r)
-            },
+            }
+            // one accessibility node per key: the clickable one carries the note name (pico-cli interact finds "C5")
+            .semantics(mergeDescendants = true) { contentDescription = Comb.name(r) },
         contentAlignment = Alignment.Center,
     ) {
         // the tine colour, as a bar along the top
